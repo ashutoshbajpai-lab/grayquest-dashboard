@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrayQuest Partner Dashboard</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="32" height="32" rx="8" fill="url(#brand-grad)"/>
+                    <path d="M9 16C9 12.134 12.134 9 16 9V23C12.134 23 9 19.866 9 16Z" fill="white"/>
+                    <path d="M16 9C19.866 9 23 12.134 23 16C23 19.866 19.866 23 16 23V9Z" fill="rgba(255,255,255,0.6)"/>
+                    <defs>
+                        <linearGradient id="brand-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#6366f1"/>
+                            <stop offset="1" stop-color="#4f46e5"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="brand-text">
+                    <span class="brand-title">GrayQuest</span>
+                    <span class="brand-subtitle">Partner Portal</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-tab="overview">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
+                    <span>Overview</span>
+                </a>
+
+                <!-- Collapsible accordion for Institutes -->
+                <div class="menu-item-wrapper" id="menu-institutes-wrapper">
+                    <a href="#" class="menu-item menu-parent" data-tab="institutes" data-expand="institutes">
+                        <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span>Institutes</span>
+                        <svg class="menu-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    <div class="sidebar-submenu" id="institutes-submenu">
+                        <a href="#" class="submenu-item active" data-tab="inst-details">
+                            <span class="submenu-dot"></span>
+                            <span>Institute Details</span>
+                        </a>
+                        <a href="#" class="submenu-item" data-tab="inst-pipeline">
+                            <span class="submenu-dot"></span>
+                            <span>Onboarding Pipeline</span>
+                        </a>
+                        <a href="#" class="submenu-item" data-tab="inst-request">
+                            <span class="submenu-dot"></span>
+                            <span>Onboarding Request</span>
+                        </a>
+                        <a href="#" class="submenu-item" data-tab="inst-api">
+                            <span class="submenu-dot"></span>
+                            <span>API & Webhook's</span>
+                        </a>
+                    </div>
+                </div>
+
+                <a href="#" class="menu-item" data-tab="transactions">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span>Transactions</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="settlements">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16V5m0 11h.01"/></svg>
+                    <span>Settlements</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="commissions">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>Commissions</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="products">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <span>Products</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="support">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span>Support</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="footer-card">
+                    <div class="footer-card-inner">
+                        <div class="balance-title">System Health</div>
+                        <div class="balance-value">99.98%</div>
+                        <div class="system-status"><span class="pulse-indicator"></span> Operational</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <main class="main-wrapper">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-search">
+                    <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" placeholder="Search across institutes, transactions..." id="global-search">
+                </div>
+                <div class="header-actions">
+                    <!-- Notifications -->
+                    <div class="notification-dropdown-wrapper">
+                        <button class="header-btn" id="notification-btn">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <span class="badge" id="notification-badge">3</span>
+                        </button>
+                        <div class="notification-dropdown" id="notification-dropdown-pane">
+                            <div class="dropdown-header">
+                                <h3>Notifications</h3>
+                                <button class="clear-all-btn" id="clear-notifications">Clear All</button>
+                            </div>
+                            <div class="dropdown-list" id="notification-list">
+                                <!-- Dynamic notifications go here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile -->
+                    <div class="profile-badge">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="Profile" class="profile-img">
+                        <div class="profile-info">
+                            <span class="profile-name">Partner Admin</span>
+                            <span class="profile-role">Executive</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Container -->
+            <div class="content-container">
+                
+                <!-- ================= OVERVIEW PANEL ================= -->
+                <div class="tab-content active" id="overview-tab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Overview Dashboard</h1>
+                            <p class="page-subtitle">Real-time performance and financial standing of your partner network</p>
+                        </div>
+                        <div class="date-filter-group" id="overview-period-filters">
+                            <button class="btn btn-secondary active">All Time</button>
+                            <button class="btn btn-secondary">This Month</button>
+                            <button class="btn btn-secondary">This Week</button>
+                        </div>
+                    </div>
+
+                    <!-- Stat Cards Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Total Institutes Onboarded</span>
+                                <div class="stat-icon-wrapper purple">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="overview-total-institutes">48</div>
+                            <div class="stat-change positive">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+                                <span>+4 this month</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Total GMV Created</span>
+                                <div class="stat-icon-wrapper blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16V5m0 11h.01"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="overview-total-gmv">₹12.45 Cr</div>
+                            <div class="stat-change positive">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+                                <span>+14.2% MoM</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Commission Earned (Card & PG)</span>
+                                <div class="stat-icon-wrapper green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="overview-total-commissions">₹24.90 L</div>
+                            <div class="stat-change positive">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+                                <span>₹2.4 L expected soon</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Pending Payouts (All Institutes)</span>
+                                <div class="stat-icon-wrapper orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="overview-pending-payouts">₹1.84 Cr</div>
+                            <div class="stat-change negative">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 9l-7 7-7-7"/></svg>
+                                <span>Payouts due in 3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Insights Row -->
+                    <div class="grid-2-col">
+                        <!-- Monthly GMV Bar Chart -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Monthly GMV Bifurcated</h3>
+                                <span class="card-subtitle">Month-on-Month Growth Trend</span>
+                            </div>
+                            <div class="card-body chart-container-large">
+                                <canvas id="monthlyGmvChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Donut Chart & Penetration Rates -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">GMV by Payment Mode</h3>
+                                <span class="card-subtitle">Penetration rates of EMI, PG & Mandate</span>
+                            </div>
+                            <div class="card-body split-donut-container">
+                                <div class="donut-chart-wrapper">
+                                    <canvas id="paymentModeDonutChart"></canvas>
+                                </div>
+                                <div class="penetration-stats-list" id="payment-mode-penetration-list">
+                                    <!-- Dynamic rows loaded from app.js -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Geo and Onboarding Time Row -->
+                    <div class="grid-2-col">
+                        <!-- Geographic Bifurcation -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Geographic Bifurcation of GMV</h3>
+                                <span class="card-subtitle">Distribution of volume across educational regions</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="geo-grid" id="geo-distribution-list">
+                                    <!-- Dynamic geo list items -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onboarding and Rate performance card -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Onboarding Metrics & Activation</h3>
+                                <span class="card-subtitle">Efficiency metrics of partner onboarding</span>
+                            </div>
+                            <div class="card-body performance-metrics-body">
+                                <div class="performance-metrics-grid">
+                                    <div class="metric-item">
+                                        <div class="metric-label">Avg Onboarding Time</div>
+                                        <div class="metric-value">4.2 Days</div>
+                                        <div class="metric-trend positive">-12% time from last Qtr</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-label">Active GILE Ratio</div>
+                                        <div class="metric-value">91.6%</div>
+                                        <div class="metric-trend positive">44 Active vs 4 Dormant</div>
+                                    </div>
+                                </div>
+
+                                <div class="top-ranking-institutes-box">
+                                    <h4 class="box-inner-title">Top Performing Institutes (by GMV)</h4>
+                                    <ul class="simple-rank-list" id="overview-top-institutes-list">
+                                        <!-- Rendered from JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= INSTITUTES TAB (MODULAR PANELS CONTROLLED BY SUBMENU) ================= -->
+                <div class="tab-content" id="institutes-tab">
+                    
+                    <!-- SUB-TAB 1: INSTITUTE DETAILS -->
+                    <div class="sub-tab-content active" id="inst-details-subtab">
+                        <div class="content-header">
+                            <div>
+                                <h1 class="page-title">Institute Details</h1>
+                                <p class="page-subtitle">Track, search and drill down into GILE structures and metrics</p>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="filter-bar">
+                            <div class="filter-search-box">
+                                <input type="text" placeholder="Filter by Institute name, group..." id="inst-list-search">
+                            </div>
+                            <div class="filter-actions-group">
+                                <select id="inst-status-filter" class="form-select-style">
+                                    <option value="all">All Statuses</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Dormant">Dormant</option>
+                                </select>
+                                <select id="inst-sort-filter" class="form-select-style">
+                                    <option value="gmv-desc">Highest GMV</option>
+                                    <option value="gmv-asc">Lowest GMV</option>
+                                    <option value="date-newest">Recently Onboarded</option>
+                                    <option value="students-desc">Most Students</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Statistics on top of details list -->
+                        <div class="mini-metrics-banner">
+                            <div class="mini-metric">
+                                <span class="mini-label">Onboarded Students (This Week)</span>
+                                <span class="mini-value" id="students-onboarded-week">1,420</span>
+                            </div>
+                            <div class="mini-metric">
+                                <span class="mini-label">Onboarded Students (This Month)</span>
+                                <span class="mini-value" id="students-onboarded-month">5,840</span>
+                            </div>
+                            <div class="mini-metric">
+                                <span class="mini-label">Onboarded Students (Yearly)</span>
+                                <span class="mini-value" id="students-onboarded-year">48,290</span>
+                            </div>
+                            <div class="mini-metric">
+                                <span class="mini-label">Avg Student Onboarding Time</span>
+                                <span class="mini-value">22 Mins</span>
+                            </div>
+                        </div>
+
+                        <!-- Table Listing of GILE -->
+                        <div class="table-container">
+                            <table class="data-table" id="institutes-table">
+                                <thead>
+                                    <tr>
+                                        <th>Institute / Group</th>
+                                        <th>GILE Detail</th>
+                                        <th style="text-align: right;">Students</th>
+                                        <th>Onboarding Date</th>
+                                        <th style="text-align: right;">GMV Created</th>
+                                        <th style="text-align: center;">Status</th>
+                                        <th style="text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="institutes-table-body">
+                                    <!-- Dynamic GILE rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 2: ONBOARDING PIPELINE -->
+                    <div class="sub-tab-content" id="inst-pipeline-subtab">
+                        <div class="content-header">
+                            <div>
+                                <h1 class="page-title">Onboarding Pipeline</h1>
+                                <p class="page-subtitle">Monitor pipeline flows, lifecycle stages, and activation curves</p>
+                            </div>
+                        </div>
+
+                        <div class="pipeline-cards-row">
+                            <div class="pipeline-card">
+                                <div class="pipeline-card-header">
+                                    <h4>Total Onboarded Institutes</h4>
+                                    <!-- card filter -->
+                                    <select class="pipeline-filter" id="pipeline-total-filter">
+                                        <option value="yearly">Yearly</option>
+                                        <option value="monthly" selected>Monthly</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="daily">Daily</option>
+                                    </select>
+                                </div>
+                                <div class="pipeline-card-value" id="pipeline-total-count">48</div>
+                                <div class="pipeline-card-footer">Across all states & regions</div>
+                            </div>
+                            <div class="pipeline-card">
+                                <div class="pipeline-card-header">
+                                    <h4>In Progress Pipelines</h4>
+                                </div>
+                                <div class="pipeline-card-value" id="pipeline-progress-count">8</div>
+                                <div class="pipeline-card-footer">Under verification & review</div>
+                            </div>
+                            <div class="pipeline-card">
+                                <div class="pipeline-card-header">
+                                    <h4>Deactivated / Blocked</h4>
+                                </div>
+                                <div class="pipeline-card-value" id="pipeline-blocked-count">3</div>
+                                <div class="pipeline-card-footer">Compliance & risk suspensions</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-2-col" style="margin-top: 24px;">
+                            <!-- Pipeline graph: Average Activation Time MoM -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Average Activation Time (Month over Month)</h3>
+                                    <span class="card-subtitle">Operational onboarding velocity in days</span>
+                                </div>
+                                <div class="card-body chart-container-medium">
+                                    <canvas id="activationTimeChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Listing rows for In-Progress/Pending onboarding -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <div class="header-with-filter">
+                                        <div>
+                                            <h3 class="card-title">Active Pipelines in Progress</h3>
+                                            <span class="card-subtitle">Follow up on lifecycle steps of GILEs</span>
+                                        </div>
+                                        <select class="form-select-style" id="pipeline-status-list-filter" style="width: auto;">
+                                            <option value="all">All States</option>
+                                            <option value="Pending Document">Pending Docs</option>
+                                            <option value="Under Review">Under Review</option>
+                                            <option value="API Setup">API Setup</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="card-body scrollable-y" style="max-height: 320px;">
+                                    <div class="pipeline-list" id="pipeline-progress-list">
+                                        <!-- Dynamic list of GILE in progress -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 3: ONBOARDING REQUEST -->
+                    <div class="sub-tab-content" id="inst-request-subtab">
+                        <div class="content-header">
+                            <div>
+                                <h1 class="page-title">Onboarding Request</h1>
+                                <p class="page-subtitle">Submit new GILE setups singly or in bulk spreadsheets</p>
+                            </div>
+                        </div>
+
+                        <div class="grid-2-col">
+                            <!-- Left: Upload sheets / Single creation Form -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Initiate Onboarding Request</h3>
+                                    <span class="card-subtitle">Configure GILE vertical and fee configurations</span>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Option toggle -->
+                                    <div class="request-toggle-group">
+                                        <button class="btn btn-secondary active" id="btn-toggle-single">Single Onboarding Form</button>
+                                        <button class="btn btn-secondary" id="btn-toggle-bulk">Bulk Sheet Upload</button>
+                                    </div>
+
+                                    <!-- Single Form -->
+                                    <form id="single-onboarding-form" class="request-form">
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="req-group">Group *</label>
+                                                <input type="text" id="req-group" placeholder="e.g. D.Y. Patil Group" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="req-institute">Institute *</label>
+                                                <input type="text" id="req-institute" placeholder="e.g. College of Engineering" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="req-location">Location *</label>
+                                                <input type="text" id="req-location" placeholder="e.g. Pune, Maharashtra" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="req-education">Education Vertical *</label>
+                                                <input type="text" id="req-education" placeholder="e.g. Higher Education" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="fee-headers-section">
+                                            <div class="fee-header-section-title">
+                                                <label>Fee Headers Configuration</label>
+                                                <span class="sub-label">Assign financing mode to fee structures</span>
+                                            </div>
+                                            <div class="fee-header-rows" id="req-fee-headers-list">
+                                                <!-- Dynamic fee rows. First row default. -->
+                                                <div class="fee-header-row">
+                                                    <input type="text" class="fee-name" placeholder="e.g. Academic Tuition Fee" required>
+                                                    <select class="fee-financing">
+                                                        <option value="EMI">EMI</option>
+                                                        <option value="PG">PG</option>
+                                                        <option value="Mandate">Mandate</option>
+                                                    </select>
+                                                    <button type="button" class="btn-remove-row" style="visibility: hidden;">×</button>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-fee-header" style="margin-top: 10px;">+ Add Fee Header</button>
+                                        </div>
+
+                                        <div class="form-footer" style="margin-top: 24px;">
+                                            <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Onboarding Request</button>
+                                        </div>
+                                    </form>
+
+                                    <!-- Bulk Upload form (Hidden by default) -->
+                                    <div id="bulk-onboarding-section" class="bulk-upload-area" style="display: none;">
+                                        <div class="drop-zone" id="bulk-drop-zone">
+                                            <svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                            <p class="drop-zone-text">Drag & drop excel/csv onboarding spreadsheet here</p>
+                                            <span class="drop-zone-subtext">or click to browse files</span>
+                                            <input type="file" id="bulk-file-input" style="display: none;" accept=".xlsx, .xls, .csv">
+                                        </div>
+                                        <div class="bulk-guidelines">
+                                            <h4>Sheet Guidelines</h4>
+                                            <ul>
+                                                <li>Ensure Group, Institute, Location, and Education headers exist.</li>
+                                                <li>List fee headers as comma-separated: <code>Tuition:EMI, Admission:PG</code>.</li>
+                                                <li>Download our <a href="#" class="primary-link">onboarding template spreadsheet</a>.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Onboarding Logs Tracking -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Onboarding Request Log</h3>
+                                    <span class="card-subtitle">Real-time status tracking of submitted requests</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="log-timeline-container" id="request-logs-list">
+                                        <!-- Loaded dynamically from app.js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 4: API & WEBHOOKS -->
+                    <div class="sub-tab-content" id="inst-api-subtab">
+                        <div class="content-header">
+                            <div>
+                                <h1 class="page-title">API & Webhooks Config</h1>
+                                <p class="page-subtitle">Configure hooks endpoints and manage credentials for GILE checkout pipelines</p>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">API & Webhooks Credentials Manager</h3>
+                                <span class="card-subtitle">Select onboarded GILE and configure system triggers</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-description-text" style="margin-bottom: 20px; font-size: 13px; color: var(--color-text-light);">Below are the GILE structures onboarded to GrayQuest payment infrastructure. Select any active location to configure API tokens, view documentation, or define webhook triggers.</p>
+                                
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Onboarded GILE Location</th>
+                                                <th>Client ID</th>
+                                                <th style="text-align: center;">Webhook Status</th>
+                                                <th>Active Endpoints</th>
+                                                <th style="text-align: right;">Configuration</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="api-gile-table-body">
+                                            <!-- Dynamic Rows from app.js -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= DEDICATED FULL-PAGE DRILL-DOWN INSTITUTE DETAILS ================= -->
+                <div class="tab-content" id="inst-drilldown-tab">
+                    <div class="content-header" style="flex-direction: row; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 20px;">
+                        <div>
+                            <button class="btn btn-secondary btn-sm" id="btn-back-to-institutes" onclick="closeInstituteDrilldown()" style="margin-bottom: 12px; font-size: 11px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                                Back to Institute Details
+                            </button>
+                            <div class="drawer-pre-title">GILE Drill-down Workspace</div>
+                            <h1 class="page-title" id="dr-inst-name" style="margin-top: 4px; font-size: 26px;">D.Y. Patil Institute</h1>
+                            <div class="drawer-gile-header" id="dr-gile-string" style="border: none; padding: 0; margin-top: 4px; color: var(--color-text-light); font-size: 11px;">GROUP • HIGHER EDUCATION • PUNE</div>
+                        </div>
+                        <div id="dr-gile-badge-status-container">
+                            <span class="badge-status active" style="font-size: 13px; padding: 6px 14px;">Active</span>
+                        </div>
+                    </div>
+
+                    <!-- Spacious 2-Column layout for full screen details -->
+                    <div class="grid-2-col" style="grid-template-columns: 1.15fr 0.85fr; margin-top: 8px;">
+                        <!-- Left Column: Metrics, splits, configs -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            
+                            <!-- Penetration Primary metric box -->
+                            <div class="drawer-primary-card">
+                                <div class="drawer-p-rate-box">
+                                    <span class="drawer-card-label">Penetration Rate</span>
+                                    <span class="drawer-card-value" id="dr-penetration-rate">68.4%</span>
+                                </div>
+                                <div class="drawer-gile-header" style="border-color: rgba(255,255,255,0.15)">FINANCIAL PENETRATION STATUS OVERALL</div>
+                            </div>
+
+                            <!-- Stat Card Grids -->
+                            <div class="drawer-stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                <div class="d-stat-box">
+                                    <span class="d-stat-lbl">Total Students</span>
+                                    <span class="d-stat-val" id="dr-total-students">4,820</span>
+                                </div>
+                                <div class="d-stat-box">
+                                    <span class="d-stat-lbl">Onboarding Date</span>
+                                    <span class="d-stat-val" id="dr-onboard-date">12 May 2024</span>
+                                </div>
+                                <div class="d-stat-box">
+                                    <span class="d-stat-lbl">Transactions Count</span>
+                                    <span class="d-stat-val" id="dr-total-tx-count">1,840</span>
+                                </div>
+                                <div class="d-stat-box">
+                                    <span class="d-stat-lbl">Total GMV created</span>
+                                    <span class="d-stat-val" id="dr-total-gmv" style="color: var(--color-primary);">₹1.84 Cr</span>
+                                </div>
+                            </div>
+
+                            <!-- Payment mode splits -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">GMV Bifurcation & Mode Penetration</h3>
+                                    <span class="card-subtitle">Volume distribution across EMI, Gateway, and Mandates</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="drawer-mini-cards-grid" id="dr-mode-splits-container">
+                                        <!-- Dynamic splits cards -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enabled PGs -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Enabled Gateways / PG Details</h3>
+                                    <span class="card-subtitle">Checkout routes active for payment transactions</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="gateways-list" id="dr-enabled-gateways">
+                                        <!-- Dynamic gateways -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fee headers -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Fee Headers Configuration</h3>
+                                    <span class="card-subtitle">Assigned financing modes for academic fees</span>
+                                </div>
+                                <div class="card-body" style="padding: 0;">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding-left: 24px;">Fee Structure Name</th>
+                                                <th style="text-align: right; padding-right: 24px;">Financing Mode</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dr-fee-headers-body">
+                                            <!-- Dynamic Fee Headers -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Contacts, Settlements, Transactions, Lifecycles -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            
+                            <!-- Contact Card -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">GILE Primary Contact Info</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="drawer-contact-card" id="dr-contact-card" style="border: none; background: none; padding: 0;">
+                                        <div class="contact-avatar" id="dr-contact-initial" style="background-color: var(--color-primary-light); color: var(--color-primary);">PA</div>
+                                        <div class="contact-details">
+                                            <h4 class="contact-name" id="dr-contact-name" style="font-size: 14px; font-weight: 700;">Prashant Acharya</h4>
+                                            <span class="contact-role" id="dr-contact-role">Dean of Finance</span>
+                                            <div class="contact-row" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg><span id="dr-contact-email">prashant@dypatil.edu</span></div>
+                                            <div class="contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg><span id="dr-contact-phone">+91 98230 45671</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financial Payout Summaries -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Settlements & Commission Metrics</h3>
+                                </div>
+                                <div class="card-body" style="display: flex; flex-direction: column; gap: 16px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+                                        <div>
+                                            <span class="s-lbl">Commission Rate (Flat)</span>
+                                            <span style="font-weight: 700; color: var(--color-text-dark); font-size: 14px;">2.0% Combined</span>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <span class="s-lbl">Commission Earned</span>
+                                            <span id="dr-commission-earned" style="font-weight: 800; color: var(--color-primary-dark); font-size: 15px;">₹3.68 Lakhs</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <span class="s-lbl">Disbursement Account</span>
+                                            <span style="font-weight: 600; font-size: 13px; color: var(--color-text-medium);">ICICI Bank •••• 9821</span>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <span class="s-lbl">Total Settled</span>
+                                            <span id="dr-total-settled" style="font-weight: 800; color: var(--color-success); font-size: 15px;">₹1.72 Cr</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Transactions -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Recent GILE Transactions</h3>
+                                    <span class="card-subtitle">Last successful checkouts</span>
+                                </div>
+                                <div class="card-body scrollable-y" style="max-height: 220px; padding: 0;">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding-left: 20px;">GQ Tx ID</th>
+                                                <th>Student</th>
+                                                <th style="text-align: right;">Amount</th>
+                                                <th style="text-align: center; padding-right: 20px;">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dr-recent-tx-body">
+                                            <!-- Dynamic Transactions -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Top Students by Total Fee -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Top Fee Paying Students</h3>
+                                    <span class="card-subtitle">Highest volume payers</span>
+                                </div>
+                                <div class="card-body" style="padding: 0;">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding-left: 20px;">Student Name</th>
+                                                <th>Course</th>
+                                                <th style="text-align: right; padding-right: 20px;">Fee Paid</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dr-top-students-body">
+                                            <!-- Dynamic Students list -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Recent Onboarded Student Lifecycle -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Onboarding Student Lifecycle</h3>
+                                    <span class="card-subtitle">Weekly onboarding steps mapping</span>
+                                </div>
+                                <div class="card-body scrollable-y" style="max-height: 240px;">
+                                    <div class="student-lifecycle-timeline" id="dr-student-lifecycle-list">
+                                        <!-- Dynamic timeline -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= TRANSACTIONS PANEL ================= -->
+                <div class="tab-content" id="transactions-tab">
+                    <div class="content-header-sub">
+                        <div>
+                            <h1 class="page-title">Transactions Section</h1>
+                            <p class="page-subtitle">Granular monitoring of payment runs, success rates and peaks</p>
+                        </div>
+                        <div class="sub-tabs-container">
+                            <button class="sub-tab-btn active" data-subtab="tx-overview">Transaction Analytics</button>
+                            <button class="sub-tab-btn" data-subtab="tx-listing">Transaction Listing</button>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TAB 1: TRANSACTIONS ANALYTICS -->
+                    <div class="sub-tab-content active" id="tx-overview-subtab">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <span class="stat-label">Successful Transactions (Total)</span>
+                                    <div class="stat-icon-wrapper green">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="tx-total-success-count">12,840</div>
+                            <div class="stat-change-box">
+                                <label for="tx-success-drill-inst">Drill by Institute:</label>
+                                <select id="tx-success-drill-inst" class="compact-select select-inst-drill">
+                                    <option value="all">All Institutes</option>
+                                    <!-- Populated from JS -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Successful Value (Total)</span>
+                                <div class="stat-icon-wrapper purple">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="tx-total-success-val">₹12.45 Cr</div>
+                            <div class="stat-change-box">
+                                <label for="tx-value-drill-inst">Drill by Institute:</label>
+                                <select id="tx-value-drill-inst" class="compact-select select-inst-drill">
+                                    <option value="all">All Institutes</option>
+                                    <!-- Populated from JS -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Pending Value (Total)</span>
+                                <div class="stat-icon-wrapper orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="tx-total-pending-val">₹18.40 L</div>
+                            <div class="stat-change negative">
+                                <span>240 transactions checking out</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Overall Success Rate</span>
+                                <div class="stat-icon-wrapper blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value">98.42%</div>
+                            <div class="stat-change positive">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+                                <span>+0.25% this month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Peak Analysis & Day trends -->
+                    <div class="grid-3-col" style="margin-top: 24px;">
+                        <div class="dashboard-card small-padding">
+                            <div class="peak-box text-center">
+                                <div class="peak-title">Peak Transaction Hour</div>
+                                <div class="peak-value">11:00 AM - 01:00 PM</div>
+                                <div class="peak-description">52% of transaction flow occurred in this block</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card small-padding">
+                            <div class="peak-box text-center">
+                                <div class="peak-title">Peak Transaction Day</div>
+                                <div class="peak-value">Monday / Friday</div>
+                                <div class="peak-description">Highest checkout velocity recorded on semester starts</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card small-padding">
+                            <div class="peak-box text-center">
+                                <div class="peak-title">Peak Date in June</div>
+                                <div class="peak-value">June 15th</div>
+                                <div class="peak-description">₹84.2 Lakhs transacted in a single day</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2-col" style="margin-top: 24px;">
+                        <!-- Payment mode splits -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Transaction Splits by Payment Mode</h3>
+                                <span class="card-subtitle">Compare performance value across Modes</span>
+                            </div>
+                            <div class="card-body chart-container-medium">
+                                <canvas id="txModeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Academic Calendar Bell Curve -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Monthly Volume Across Academic Calendar</h3>
+                                <span class="card-subtitle">Volume distribution bell-curve showing seasonal peaks</span>
+                            </div>
+                            <div class="card-body chart-container-medium">
+                                <canvas id="txBellCurveChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    </div> <!-- end tx-overview-subtab -->
+
+                    <!-- SUB-TAB 2: TRANSACTION LISTING -->
+                    <div class="sub-tab-content" id="tx-listing-subtab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Transaction Listing</h1>
+                            <p class="page-subtitle">Granular checkout details, payment statuses, and UTR mappings</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters bar -->
+                    <div class="filter-bar">
+                        <div class="filter-search-box">
+                            <input type="text" placeholder="Search by GQ ID, UTR, Institute..." id="tx-list-search">
+                        </div>
+                        <div class="filter-actions-group">
+                            <select id="tx-inst-filter" class="form-select-style">
+                                <option value="all">All Institutes</option>
+                                <!-- Populated from JS -->
+                            </select>
+                            <select id="tx-mode-filter" class="form-select-style">
+                                <option value="all">All Modes</option>
+                                <option value="EMI">EMI</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Net Banking">Net Banking</option>
+                                <option value="e-Mandate">e-Mandate</option>
+                            </select>
+                            <select id="tx-status-filter" class="form-select-style">
+                                <option value="all">All Statuses</option>
+                                <option value="Success">Success</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Listing Grid -->
+                    <div class="table-container">
+                        <table class="data-table" id="tx-table">
+                            <thead>
+                                <tr>
+                                    <th>GQ Txn ID</th>
+                                    <th>Institute GILE</th>
+                                    <th>Customer Details</th>
+                                    <th style="text-align: right;">Amount</th>
+                                    <th>Date & Time</th>
+                                    <th style="text-align: center;">Payment Mode</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th>UTR Mapped</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tx-table-body">
+                                <!-- Dynamic transactions -->
+                            </tbody>
+                        </table>
+                    </div>
+                    </div> <!-- end tx-listing-subtab -->
+                </div> <!-- end transactions-tab -->
+
+
+                <!-- ================= SETTLEMENTS PANEL ================= -->
+                <div class="tab-content" id="settlements-tab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Settlement Portal</h1>
+                            <p class="page-subtitle">Track settled funds, bank disbursements, UTR listings, and download records</p>
+                        </div>
+                        <div class="date-filter-group range-picker-group">
+                            <label>Range: </label>
+                            <input type="date" id="settlement-date-start" class="date-input">
+                            <input type="date" id="settlement-date-end" class="date-input">
+                            <button class="btn btn-secondary btn-sm" id="btn-settlement-filter-apply">Apply</button>
+                            <button class="btn btn-primary btn-sm btn-icon" id="btn-settlement-download">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                Download Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Settlement metric -->
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Total Settled Value</span>
+                                <div class="stat-icon-wrapper green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="settled-total-value">₹10.61 Cr</div>
+                            <div class="stat-change positive">
+                                <span>Disbursed to college bank accounts</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Settled Transactions count</span>
+                                <div class="stat-icon-wrapper blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="settled-total-count">11,210</div>
+                            <div class="stat-change positive">
+                                <span>No processing delays</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Unsettled / In transit</span>
+                                <div class="stat-icon-wrapper orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="settled-transit-value">₹1.84 Cr</div>
+                            <div class="stat-change warning">
+                                <span>Batch settlement running</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settlements Daily Trend Chart -->
+                    <div class="dashboard-card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h3 class="card-title">Daily Settlement Trend</h3>
+                            <span class="card-subtitle">Amount settled per day over last 7 days</span>
+                        </div>
+                        <div class="card-body chart-container-medium">
+                            <canvas id="settlementsBarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Settlements Table -->
+                    <div class="dashboard-card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h3 class="card-title">Disbursement & UTR Listing</h3>
+                            <span class="card-subtitle">List of settlements mapped to respective institute accounts</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-container" style="border: none; box-shadow: none;">
+                                <table class="data-table" id="settlements-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding-left: 24px;">Settlement ID</th>
+                                            <th>Institute Details</th>
+                                            <th>UTR Number</th>
+                                            <th style="text-align: right;">Settled Amount</th>
+                                            <th>Settlement Date</th>
+                                            <th>Account Mapped</th>
+                                            <th style="text-align: center; padding-right: 24px;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settlements-table-body">
+                                        <!-- Dynamic Settlement Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= COMMISSIONS PANEL ================= -->
+                <div class="tab-content" id="commissions-tab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Commissions Section</h1>
+                            <p class="page-subtitle">Review revenue earnings, payment splits and payouts</p>
+                        </div>
+                        <div class="date-filter-group range-picker-group">
+                            <label>Period: </label>
+                            <select id="commission-card-period-filter" class="form-select-style" style="width: auto;">
+                                <option value="all">All Time</option>
+                                <option value="yearly">Yearly</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="daily">Daily</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm btn-icon" id="btn-commission-download">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                Download Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Metric Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Total Commission Earned</span>
+                                <div class="stat-icon-wrapper green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16V5m0 11h.01"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="comm-earned-val">₹24.90 L</div>
+                            <div class="stat-change positive">
+                                <span>Based on transacted amount: <strong>₹12.45 Cr</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Avg Commission Rate</span>
+                                <div class="stat-icon-wrapper blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="comm-rate-val">2.0%</div>
+                            <div class="stat-change positive">
+                                <span>Pre-agreed partner share rates</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <span class="stat-label">Expected Comm. from Pending</span>
+                                <div class="stat-icon-wrapper orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="comm-pend-val">₹3.68 Lakhs</div>
+                            <div class="stat-change warning">
+                                <span>Expected: <strong>June 25, 2026</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commission Trend Chart -->
+                    <div class="dashboard-card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h3 class="card-title">Commission Trend</h3>
+                            <span class="card-subtitle">Monthly commission trends and projections</span>
+                        </div>
+                        <div class="card-body chart-container-medium">
+                            <canvas id="commissionsLineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid-2-col" style="margin-top: 24px;">
+                        <!-- Commission splits by Mode -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Commission Bifurcation by Payment Modes</h3>
+                                <span class="card-subtitle">Total fees generated through credit splits</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="comm-mode-splits-list" id="comm-mode-splits-list">
+                                    <!-- Loaded from JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mini report info -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Earnings Schedule Rules</h3>
+                                <span class="card-subtitle">Understanding payout policies</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="schedule-rules">
+                                    <div class="rule-item">
+                                        <h4>EMI Transactions</h4>
+                                        <p>Commissions of 2.2% calculated on net value. Disbursed post partner check-in triggers (T+3 working days).</p>
+                                    </div>
+                                    <div class="rule-item">
+                                        <h4>Payment Gateway (PG)</h4>
+                                        <p>Commissions of 1.8% calculated on transactional success. Disbursed daily on T+1 settlement cycles.</p>
+                                    </div>
+                                    <div class="rule-item">
+                                        <h4>Mandate (Auto-debit)</h4>
+                                        <p>Flat ₹15 per successful debit + 0.5% net value. Disbursed in monthly batches on the 10th of every month.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transactions showing commission details -->
+                    <div class="dashboard-card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <h3 class="card-title">Transactions Payout & Commission Breakdown</h3>
+                            <span class="card-subtitle">Detailing date, UTR, GrayQuest payment ID and transaction ID</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <!-- Filters bar inside card body with padding -->
+                            <div class="filter-bar" style="padding: 20px 24px 0 24px; margin-bottom: 12px;">
+                                <div class="filter-search-box">
+                                    <input type="text" placeholder="Search by ID, UTR..." id="comm-list-search">
+                                </div>
+                                <div class="filter-actions-group">
+                                    <input type="date" id="comm-list-date-start" class="date-input" style="font-size: 12px; padding: 6px 10px;">
+                                    <input type="date" id="comm-list-date-end" class="date-input" style="font-size: 12px; padding: 6px 10px;">
+                                    <button class="btn btn-secondary btn-sm" id="btn-comm-list-date-apply">Filter Date</button>
+                                </div>
+                            </div>
+
+                            <div class="table-container" style="border: none; box-shadow: none;">
+                                <table class="data-table" id="comm-tx-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding-left: 24px;">Transaction Date</th>
+                                            <th>GrayQuest Payment ID</th>
+                                            <th>Transaction ID</th>
+                                            <th style="text-align: right;">Total Payout Amount</th>
+                                            <th style="text-align: right;">Commission Earned</th>
+                                            <th style="text-align: center;">Rate %</th>
+                                            <th style="padding-right: 24px;">UTR Mapped</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="comm-tx-table-body">
+                                        <!-- Dynamic rows loaded from JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= PRODUCTS CONFIGURATOR PANEL ================= -->
+                <div class="tab-content" id="products-tab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Products Configurator</h1>
+                            <p class="page-subtitle">Available payment and financing systems enabled for your partner GILE network</p>
+                        </div>
+                    </div>
+
+                    <div class="products-grid">
+                        <div class="product-card">
+                            <div class="product-card-header">
+                                <div class="product-icon-wrapper pg">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                </div>
+                                <span class="product-status-tag active">Enabled</span>
+                            </div>
+                            <h3 class="product-title">Payment Gateway (PG) options</h3>
+                            <p class="product-description">Standard PG allowing payments through UPI, Cards (Visa, Mastercard, RuPay), and Netbanking.</p>
+                            
+                            <div class="product-metrics">
+                                <div class="p-metric">
+                                    <span class="p-metric-label">Success Rate</span>
+                                    <span class="p-metric-val success">98.9%</span>
+                                </div>
+                                <div class="p-metric">
+                                    <span class="p-metric-label">Active GILEs</span>
+                                    <span class="p-metric-val">44 / 48</span>
+                                </div>
+                            </div>
+                            
+                            <div class="product-features-list">
+                                <span>PGs Available:</span>
+                                <ul>
+                                    <li>Razorpay Integration (Default Checkout)</li>
+                                    <li>BillDesk Backup routing</li>
+                                    <li>Instant UPI refund mechanism</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="product-card">
+                            <div class="product-card-header">
+                                <div class="product-icon-wrapper emi">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16V5m0 11h.01"/></svg>
+                                </div>
+                                <span class="product-status-tag active">Enabled</span>
+                            </div>
+                            <h3 class="product-title">EMI & Credit Financing</h3>
+                            <p class="product-description">Enable zero-cost and low-cost multi-month EMI facilities for parents through partner NBFC networks.</p>
+                            
+                            <div class="product-metrics">
+                                <div class="p-metric">
+                                    <span class="p-metric-label">Success Rate</span>
+                                    <span class="p-metric-val success">95.4%</span>
+                                </div>
+                                <div class="p-metric">
+                                    <span class="p-metric-label">Active GILEs</span>
+                                    <span class="p-metric-val">36 / 48</span>
+                                </div>
+                            </div>
+                            
+                            <div class="product-features-list">
+                                <span>EMI Options Available:</span>
+                                <ul>
+                                    <li>3, 6, 9 Month No Cost EMI Plans</li>
+                                    <li>Co-signed NBFC Student Loans</li>
+                                    <li>Instant credit underwriting (&lt; 5 mins)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="product-card">
+                            <div class="product-card-header">
+                                <div class="product-icon-wrapper auto">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5"/></svg>
+                                </div>
+                                <span class="product-status-tag active">Enabled</span>
+                            </div>
+                            <h3 class="product-title">Auto-Debit & Mandates</h3>
+                            <p class="product-description">Automate recurring fee collections using e-NACH and UPI Autodebit setups directly mapped to parent accounts.</p>
+                            
+                            <div class="product-metrics">
+                                <div class="p-metric">
+                                    <span class="p-metric-label">Success Rate</span>
+                                    <span class="p-metric-val success">97.8%</span>
+                                </div>
+                                <div class="p-metric">
+                                    <span class="p-metric-label">Active GILEs</span>
+                                    <span class="p-metric-val">42 / 48</span>
+                                </div>
+                            </div>
+                            
+                            <div class="product-features-list">
+                                <span>Auto-Debit Channels:</span>
+                                <ul>
+                                    <li>UPI Mandate (2.0 recurring payments)</li>
+                                    <li>e-NACH Netbanking validation</li>
+                                    <li>Physical mandate form ingestion</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Products Configurator Grid per Institute (GILE) -->
+                    <div class="dashboard-card" style="margin-top: 28px;">
+                        <div class="card-header">
+                            <h3 class="card-title">GILE Product Activation Console</h3>
+                            <span class="card-subtitle">Manage payment structures, gateways, and autodebits per campus location</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <div class="table-container" style="border: none; box-shadow: none;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding-left: 24px;">GILE Location Name</th>
+                                            <th style="text-align: center;">Payment Gateway (PG)</th>
+                                            <th style="text-align: center;">EMI Credit Financing</th>
+                                            <th style="text-align: center;">Auto-Debit Mandates</th>
+                                            <th style="text-align: right;">Onboarding success</th>
+                                            <th style="text-align: right; padding-right: 24px;">Configure Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="products-gile-table-body">
+                                        <!-- Dynamically loaded from app.js -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= SUPPORT PANEL ================= -->
+                <div class="tab-content" id="support-tab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Support Desk</h1>
+                            <p class="page-subtitle">Resolve payment issues, report onboarding bottlenecks and view active tickets</p>
+                        </div>
+                    </div>
+
+                    <div class="grid-3-col" style="grid-template-columns: 1.2fr 1.8fr;">
+                        <!-- Left: File a Ticket -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">File Support Ticket</h3>
+                                <span class="card-subtitle">Submit query directly to GrayQuest operations desk</span>
+                            </div>
+                            <div class="card-body">
+                                <form id="support-ticket-form">
+                                    <div class="form-group" style="margin-bottom: 16px;">
+                                        <label for="sup-category">Category *</label>
+                                        <select id="sup-category" class="form-select-style" style="width: 100%;" required>
+                                            <option value="Settlement Delay">Settlement Delay</option>
+                                            <option value="Onboarding Issue">Onboarding Pipeline Bottleneck</option>
+                                            <option value="PG Transaction Failed">PG Transaction Failure Dispute</option>
+                                            <option value="API Integration">API & Webhook Query</option>
+                                            <option value="Others">Others</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 16px;">
+                                        <label for="sup-subject">Subject *</label>
+                                        <input type="text" id="sup-subject" placeholder="Brief description of the issue" required>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 16px;">
+                                        <label for="sup-gile">GILE Location Affected</label>
+                                        <select id="sup-gile" class="form-select-style" style="width: 100%;">
+                                            <!-- Dynamically filled with GILE listings -->
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 20px;">
+                                        <label for="sup-message">Details *</label>
+                                        <textarea id="sup-message" placeholder="Provide as much details like transaction IDs, error codes..." rows="5" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Ticket</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Right: Active support requests -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Support Ticket Log</h3>
+                                <span class="card-subtitle">Current status and feedback of your open support tickets</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="ticket-list" id="support-tickets-list">
+                                    <!-- Dynamic Tickets from app.js -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= API & WEBHOOKS CONFIGURATION MODAL ================= -->
+    <div class="modal-overlay" id="webhook-modal-overlay"></div>
+    <div class="modal" id="webhook-modal">
+        <div class="modal-header">
+            <h3>Configure Webhooks & API Keys</h3>
+            <button class="btn-close-modal" id="btn-close-webhook-modal">×</button>
+        </div>
+        <div class="modal-body">
+            <h4 id="webhook-modal-gile-name" style="margin-bottom: 4px; color: var(--color-text-dark); font-weight: 700;">Institute Location</h4>
+            <p style="font-size: 12px; color: var(--color-text-light); margin-bottom: 20px;">Manage Webhook endpoints and security tokens for automated checkout operations.</p>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label>Client ID</label>
+                <div class="copy-input-group">
+                    <input type="text" id="modal-client-id" readonly value="gq_client_id_dypatil_pune" style="font-family: monospace;">
+                    <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('modal-client-id').value); alert('Client ID copied!');">Copy</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Client Secret</label>
+                <div class="copy-input-group">
+                    <input type="password" id="modal-client-secret" readonly value="••••••••••••••••••••••••••••••••" style="font-family: monospace;">
+                    <button class="btn btn-secondary btn-sm" id="btn-reveal-secret">Reveal</button>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 16px; margin-top: 16px;">
+                <h4 style="margin-bottom: 12px; color: var(--color-text-dark); font-size: 14px;">Webhook Subscription</h4>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="webhook-url">Endpoint URL</label>
+                    <input type="url" id="webhook-url" placeholder="https://api.youruniversity.edu/grayquest/webhooks" style="width: 100%;">
+                </div>
+
+                <div class="events-checklist">
+                    <label style="margin-bottom: 8px; display: block;">Events to subscribe *</label>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="ev-success" checked>
+                        <label for="ev-success">transaction.successful</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="ev-failed" checked>
+                        <label for="ev-failed">transaction.failed</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="ev-settled">
+                        <label for="ev-settled">settlement.completed</label>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="ev-onboard">
+                        <label for="ev-onboard">student.onboarded</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="btn-cancel-webhook">Cancel</button>
+            <button class="btn btn-primary" id="btn-save-webhook">Save Webhook Configuration</button>
+        </div>
+    </div>
+
+    <!-- Script App -->
+    <script src="app.js?v=2"></script>
+</body>
+</html>

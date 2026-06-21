@@ -1,0 +1,6 @@
+node_modules/
+*.log
+test_*.png
+verify_all_screens.js
+qa_comprehensive.js
+qa_test.js
