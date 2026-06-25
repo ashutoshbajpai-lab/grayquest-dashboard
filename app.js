@@ -183,6 +183,11 @@ const DB = {
         { gile: 'GQ-GILE-3312 - Ryan International', pg: true, emi: true, auto: true, success: '97.2%' },
         { gile: 'GQ-GILE-7741 - Amity University', pg: true, emi: true, auto: false, success: '94.8%' },
         { gile: 'GQ-GILE-9922 - Podar International', pg: true, emi: false, auto: false, success: '89.5%' }
+    ],
+    onboardingRequests: [
+        { id: 'REQ-001', name: 'Ryan International', gile: 'GQ-GILE-PEND-1', group: 'Ryan Group', location: 'Mumbai, MH', education: 'K-12 School', date: '19 Jun 2024', status: 'Pending Product ID', productId: '', code: '', groupId: '', instituteId: '', locationId: '', educationId: '', classId: '', feeRows: [{ feeType: 'Tuition Fee', type: 'Monthly', active: true }], createdOn: '19 Jun 2024 10:00', updatedOn: '19 Jun 2024 10:00' },
+        { id: 'REQ-002', name: 'Amity University', gile: 'GQ-GILE-PEND-2', group: 'Amity Education', location: 'Noida, UP', education: 'Higher Education', date: '20 Jun 2024', status: 'Pending Product ID', productId: '', code: '', groupId: '', instituteId: '', locationId: '', educationId: '', classId: '', feeRows: [{ feeType: 'Hostel Fee', type: 'Quarterly', active: true }], createdOn: '20 Jun 2024 11:30', updatedOn: '20 Jun 2024 11:30' },
+        { id: 'REQ-003', name: 'Podar International', gile: 'GQ-GILE-PEND-3', group: 'Podar Group', location: 'Pune, MH', education: 'K-12 School', date: '21 Jun 2024', status: 'Pending Product ID', productId: '', code: '', groupId: '', instituteId: '', locationId: '', educationId: '', classId: '', feeRows: [{ feeType: 'Tuition Fee', type: 'Monthly', active: true }], createdOn: '21 Jun 2024 14:15', updatedOn: '21 Jun 2024 14:15' }
     ]
 };
 
@@ -215,6 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
     populateSupportGileSelect();
     populateSupportTickets();
     populateProductsTable();
+    initAdminPanel();
+    populateAdminPendingRequests();
 
     // Default tab
     switchTab('overview');
@@ -314,6 +321,7 @@ function switchTab(tabId) {
         if (targetId === 'commissions-tab') renderCommissionsChart();
         if (targetId === 'settlements-tab') renderSettlementsChart();
         if (targetId === 'transactions-tab') renderTransactionsChart();
+        if (targetId === 'admin-tab') populateAdminPendingRequests();
     }
 }
 
@@ -397,8 +405,63 @@ function initAllButtons() {
             e.preventDefault();
             const group = document.getElementById('req-group').value;
             const institute = document.getElementById('req-institute').value;
-            showToast(`✅ Onboarding request for "${institute} – ${group}" submitted successfully!`);
+            const location = document.getElementById('req-location').value;
+            const education = document.getElementById('req-education').value;
+
+            // Gather fee headers
+            const feeRows = [];
+            document.querySelectorAll('#req-fee-headers-list .fee-header-row').forEach(row => {
+                const name = row.querySelector('.fee-name').value;
+                const financing = row.querySelector('.fee-financing').value;
+                if (name) {
+                    feeRows.push({ feeType: name, type: financing, active: true });
+                }
+            });
+
+            const newReq = {
+                id: 'REQ-' + String(DB.onboardingRequests.length + 1).padStart(3, '0'),
+                name: institute,
+                gile: 'GQ-GILE-PEND-' + (DB.onboardingRequests.length + 1),
+                group: group,
+                location: location,
+                education: education,
+                date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }),
+                status: 'Pending Product ID',
+                productId: '',
+                code: '',
+                groupId: '',
+                instituteId: '',
+                locationId: '',
+                educationId: '',
+                classId: '',
+                feeRows: feeRows,
+                createdOn: new Date().toLocaleString(),
+                updatedOn: new Date().toLocaleString()
+            };
+
+            DB.onboardingRequests.push(newReq);
+            populateOnboardingRequestLog();
+            if (typeof populateAdminPendingRequests === 'function') {
+                populateAdminPendingRequests();
+            }
+
+            showToast(`✅ Onboarding request for "${institute}" submitted successfully!`);
             singleFormEl.reset();
+            // Reset fee rows to default single row
+            const list = document.getElementById('req-fee-headers-list');
+            if (list) {
+                list.innerHTML = `
+                    <div class="fee-header-row">
+                        <input type="text" class="fee-name" placeholder="e.g. Academic Tuition Fee" required>
+                        <select class="fee-financing">
+                            <option value="EMI">EMI</option>
+                            <option value="PG">PG</option>
+                            <option value="Mandate">Mandate</option>
+                        </select>
+                        <button type="button" class="btn-remove-row" style="visibility: hidden;">×</button>
+                    </div>
+                `;
+            }
         });
     }
 
@@ -808,53 +871,244 @@ function populateCommissionTxTable() {
     });
 }
 
+function toggleGroupRow(rowId, el) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    const isHidden = row.style.display === 'none';
+    row.style.display = isHidden ? '' : 'none';
+    el.classList.toggle('expanded', isHidden);
+}
+
+function redirectToFms(id, detail, inst) {
+    showToast(`🔗 Redirecting to FMS platform for ID: ${id} (${detail})`);
+    console.log(`Mock FMS Redirect: https://fms.grayquest.com/record/${id}?inst=${encodeURIComponent(inst)}`);
+}
+
 function populateSettlements() {
     const tbody = document.getElementById('settlements-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
-    DB.settlements.forEach(s => {
-        const badge = s.status === 'Completed' ? 'success' : 'pending';
+
+    const startDateVal = document.getElementById('settlement-date-start')?.value || '';
+    const endDateVal = document.getElementById('settlement-date-end')?.value || '';
+
+    const parseAmt = str => Number(str.replace(/[^0-9.-]+/g, ""));
+
+    const filteredSettlements = DB.settlements.filter(s => {
+        if (!startDateVal && !endDateVal) return true;
+        const sDate = new Date(s.date);
+        if (startDateVal && sDate < new Date(startDateVal)) return false;
+        if (endDateVal && sDate > new Date(endDateVal)) return false;
+        return true;
+    });
+
+    const grouped = {};
+    filteredSettlements.forEach(s => {
+        if (!grouped[s.inst]) {
+            grouped[s.inst] = {
+                items: [],
+                totalVolume: 0,
+                lastDate: s.date,
+                accounts: new Set()
+            };
+        }
+        grouped[s.inst].items.push(s);
+        grouped[s.inst].totalVolume += parseAmt(s.amount);
+        grouped[s.inst].accounts.add(s.accountMapped);
+        if (new Date(s.date) > new Date(grouped[s.inst].lastDate)) {
+            grouped[s.inst].lastDate = s.date;
+        }
+    });
+
+    let index = 0;
+    Object.keys(grouped).forEach(instName => {
+        const group = grouped[instName];
+        const detailRowId = `set-detail-row-${index}`;
+        const accountsMapped = Array.from(group.accounts).join(', ');
+
         tbody.innerHTML += `
-            <tr>
-                <td style="padding-left:24px;">
-                    <div class="table-primary-text">${s.id}</div>
-                    <div class="table-secondary-text">${s.date}</div>
+            <tr class="grouped-header-tr" onclick="toggleGroupRow('${detailRowId}', this)">
+                <td style="padding-left: 24px;">
+                    <span class="grouped-expand-chevron">▶</span>
+                    <strong>${instName}</strong>
                 </td>
-                <td>
-                    <div class="table-primary-text">${s.inst}</div>
+                <td><div class="table-secondary-text">${group.items.length} Disbursements</div></td>
+                <td><span style="font-family:monospace;font-size:11px;">—</span></td>
+                <td class="table-primary-text text-right" style="font-weight:700;color:var(--color-success);">₹${group.totalVolume.toLocaleString('en-IN')}</td>
+                <td>${group.lastDate}</td>
+                <td><div class="table-secondary-text">${accountsMapped}</div></td>
+                <td style="text-align:center;padding-right:24px;"><span class="badge-status success">Active</span></td>
+            </tr>
+            <tr id="${detailRowId}" class="drilldown-container-tr" style="display:none;">
+                <td colspan="7" style="padding:0;">
+                    <div class="drilldown-inner-card">
+                        <div class="drilldown-inner-header">
+                            <span class="drilldown-inner-title">Detailed bank disbursements for ${instName}</span>
+                            <span class="table-secondary-text">${group.items.length} records</span>
+                        </div>
+                        <table class="inner-drilldown-table">
+                            <thead>
+                                <tr>
+                                    <th>Settlement ID</th>
+                                    <th>UTR Number</th>
+                                    <th>Settlement Date</th>
+                                    <th>Account Mapped</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right;">Amount</th>
+                                    <th style="text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${group.items.map(s => {
+                                    const badge = s.status === 'Completed' ? 'success' : 'pending';
+                                    return `
+                                        <tr>
+                                            <td><span style="font-family:monospace;font-weight:600;">${s.id}</span></td>
+                                            <td><span style="font-family:monospace;">${s.utr}</span></td>
+                                            <td>${s.date}</td>
+                                            <td>${s.accountMapped}</td>
+                                            <td><span class="badge-status ${badge}" style="font-size:10px;">${s.status}</span></td>
+                                            <td style="text-align:right; font-weight:700; color:var(--color-success);">${s.amount}</td>
+                                            <td style="text-align:center;">
+                                                <button class="btn-view-fms" onclick="redirectToFms('${s.id}', 'Disbursement', '${instName}'); event.stopPropagation();">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                                                    View FMS
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                 </td>
-                <td><span style="font-family:monospace;font-size:12px;">${s.utr}</span></td>
-                <td class="table-primary-text text-right" style="font-weight:700;color:var(--color-success);">${s.amount}</td>
-                <td>${s.date.split(' ')[0]}</td>
-                <td><div class="table-secondary-text">${s.accountMapped}</div></td>
-                <td style="text-align:center;padding-right:24px;"><span class="badge-status ${badge}">${s.status}</span></td>
             </tr>
         `;
+        index++;
     });
+
+    if (tbody.innerHTML === '') {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--color-text-light);">No settlements found</td></tr>`;
+    }
 }
 
 function populateTransactions() {
     const tbody = document.getElementById('tx-table-body');
     if (!tbody) return;
     tbody.innerHTML = '';
-    DB.transactions.forEach(t => {
-        const badge = t.status === 'Success' ? 'success' : 'failed';
+
+    const search = (document.getElementById('tx-list-search')?.value || '').toLowerCase();
+    const modeVal = document.getElementById('tx-mode-filter')?.value || 'all';
+    const statusVal = document.getElementById('tx-status-filter')?.value || 'all';
+    const instVal = document.getElementById('tx-inst-filter')?.value || 'all';
+
+    const parseAmt = str => Number(str.replace(/[^0-9.-]+/g, ""));
+
+    const filteredTxs = DB.transactions.filter(t => {
+        const matchesSearch = !search || 
+            t.id.toLowerCase().includes(search) || 
+            t.student.toLowerCase().includes(search) || 
+            t.utr.toLowerCase().includes(search) || 
+            t.inst.toLowerCase().includes(search);
+        const matchesMode = modeVal === 'all' || t.method === modeVal;
+        const matchesStatus = statusVal === 'all' || t.status === statusVal;
+        const matchesInst = instVal === 'all' || t.inst === instVal;
+        return matchesSearch && matchesMode && matchesStatus && matchesInst;
+    });
+
+    const grouped = {};
+    filteredTxs.forEach(t => {
+        if (!grouped[t.inst]) {
+            grouped[t.inst] = {
+                txs: [],
+                totalVolume: 0,
+                lastDate: t.date,
+                modes: new Set()
+            };
+        }
+        grouped[t.inst].txs.push(t);
+        grouped[t.inst].totalVolume += parseAmt(t.amount);
+        grouped[t.inst].modes.add(t.method);
+        if (t.date > grouped[t.inst].lastDate) {
+            grouped[t.inst].lastDate = t.date;
+        }
+    });
+
+    let index = 0;
+    Object.keys(grouped).forEach(instName => {
+        const group = grouped[instName];
+        const detailRowId = `tx-detail-row-${index}`;
+        const modesBadges = Array.from(group.modes).map(m => 
+            `<span class="badge-status active" style="font-size:10px; margin-right:4px; background:var(--color-primary-light); color:var(--color-primary);">${m}</span>`
+        ).join('');
+
         tbody.innerHTML += `
-            <tr>
-                <td>
-                    <div class="table-primary-text">${t.id}</div>
-                    <div class="table-secondary-text">${t.date}</div>
+            <tr class="grouped-header-tr" onclick="toggleGroupRow('${detailRowId}', this)">
+                <td style="padding-left: 24px;">
+                    <span class="grouped-expand-chevron">▶</span>
+                    <strong>${instName}</strong>
                 </td>
-                <td><div class="table-primary-text">${t.inst}</div></td>
-                <td><div class="table-primary-text">${t.student || '—'}</div></td>
-                <td class="table-primary-text text-right">${t.amount}</td>
-                <td>${t.date.split(' ')[0]}</td>
-                <td style="text-align:center;"><span class="badge-status active" style="background:var(--color-primary-light);color:var(--color-primary);">${t.method}</span></td>
-                <td style="text-align:center;"><span class="badge-status ${badge}">${t.status}</span></td>
-                <td style="font-family:monospace;font-size:11px;">${t.utr || '—'}</td>
+                <td><div class="table-secondary-text">${group.txs.length} Transactions</div></td>
+                <td>${modesBadges}</td>
+                <td class="table-primary-text text-right" style="font-weight:700;">₹${group.totalVolume.toLocaleString('en-IN')}</td>
+                <td>${group.lastDate}</td>
+                <td style="text-align:center;"><span class="badge-status success">Active</span></td>
+                <td style="text-align:center;">—</td>
+                <td>—</td>
+            </tr>
+            <tr id="${detailRowId}" class="drilldown-container-tr" style="display:none;">
+                <td colspan="8" style="padding:0;">
+                    <div class="drilldown-inner-card">
+                        <div class="drilldown-inner-header">
+                            <span class="drilldown-inner-title">Detailed student transactions for ${instName}</span>
+                            <span class="table-secondary-text">${group.txs.length} records</span>
+                        </div>
+                        <table class="inner-drilldown-table">
+                            <thead>
+                                <tr>
+                                    <th>GQ Txn ID</th>
+                                    <th>Student Name</th>
+                                    <th>Date & Time</th>
+                                    <th>Payment Mode</th>
+                                    <th>Status</th>
+                                    <th>UTR Mapped</th>
+                                    <th style="text-align:right;">Amount</th>
+                                    <th style="text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${group.txs.map(t => {
+                                    const badge = t.status === 'Success' ? 'success' : 'failed';
+                                    return `
+                                        <tr>
+                                            <td><span style="font-family:monospace;font-weight:600;">${t.id}</span></td>
+                                            <td><strong>${t.student}</strong></td>
+                                            <td>${t.date}</td>
+                                            <td><span class="badge-status active" style="background:var(--color-primary-light);color:var(--color-primary); font-size:10px;">${t.method}</span></td>
+                                            <td><span class="badge-status ${badge}" style="font-size:10px;">${t.status}</span></td>
+                                            <td><span style="font-family:monospace;">${t.utr}</span></td>
+                                            <td style="text-align:right; font-weight:700; color:var(--color-text-dark);">${t.amount}</td>
+                                            <td style="text-align:center;">
+                                                <button class="btn-view-fms" onclick="redirectToFms('${t.id}', '${t.student}', '${instName}'); event.stopPropagation();">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                                                    View FMS
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
             </tr>
         `;
+        index++;
     });
+
+    if (tbody.innerHTML === '') {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--color-text-light);">No transactions found</td></tr>`;
+    }
 }
 
 function populateApiTable() {
@@ -901,20 +1155,21 @@ function populateNotifications() {
 function populateOnboardingRequestLog() {
     const container = document.getElementById('request-logs-list');
     if (!container) return;
-    const logs = [
-        { name: 'Ryan International', gile: 'GQ-GILE-PEND-1', date: '19 Jun 2024', status: 'In Review', color: 'orange' },
-        { name: 'Amity University', gile: 'GQ-GILE-PEND-2', date: '20 Jun 2024', status: 'API Setup', color: 'blue' },
-        { name: 'Podar International', gile: 'GQ-GILE-PEND-3', date: '21 Jun 2024', status: 'Contract', color: 'green' }
-    ];
     container.innerHTML = '';
-    logs.forEach(l => {
+    DB.onboardingRequests.forEach(req => {
+        let badgeClass = 'pending';
+        if (req.status === 'Completed') {
+            badgeClass = 'success';
+        } else if (req.status === 'Configuring') {
+            badgeClass = 'pending';
+        }
         container.innerHTML += `
-            <div class="pipeline-item" style="padding: 14px 0; border-bottom: 1px solid var(--color-border);">
+            <div class="pipeline-item" style="padding: 14px 0; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
                 <div class="pipeline-info-details">
-                    <div class="pipeline-title">${l.name}</div>
-                    <div class="pipeline-sub">${l.gile} &bull; ${l.date}</div>
+                    <div class="pipeline-title" style="font-weight: 600; color: var(--color-text-dark);">${req.name}</div>
+                    <div class="pipeline-sub" style="font-size: 11px; color: var(--color-text-light); margin-top: 2px;">${req.gile} &bull; ${req.date}</div>
                 </div>
-                <span class="badge-status pending">${l.status}</span>
+                <span class="badge-status ${badgeClass}" style="font-size: 11px; padding: 4px 8px; border-radius: 4px;">${req.status}</span>
             </div>
         `;
     });
@@ -1087,21 +1342,7 @@ function filterInstituteTable() {
 }
 
 function filterTransactions() {
-    const search = (document.getElementById('tx-list-search')?.value || '').toLowerCase();
-    const modeVal = document.getElementById('tx-mode-filter')?.value || 'all';
-    const statusVal = document.getElementById('tx-status-filter')?.value || 'all';
-    const instVal = document.getElementById('tx-inst-filter')?.value || 'all';
-    const tbody = document.getElementById('tx-table-body');
-    if (!tbody) return;
-
-    tbody.querySelectorAll('tr').forEach(row => {
-        const text = row.innerText;
-        const hasMode = modeVal === 'all' || text.includes(modeVal);
-        const hasStatus = statusVal === 'all' || text.includes(statusVal);
-        const hasInst = instVal === 'all' || text.toLowerCase().includes(instVal.toLowerCase());
-        const hasSearch = !search || text.toLowerCase().includes(search);
-        row.style.display = hasMode && hasStatus && hasInst && hasSearch ? '' : 'none';
-    });
+    populateTransactions();
 }
 
 function filterTableRows(tbodyId, query, columns) {
@@ -1338,3 +1579,307 @@ function showToast(message, type = 'success') {
     container.appendChild(toast);
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
+
+// ================= ADMIN PANEL ONBOARDING CONFIGURATOR =================
+let activeConfigReq = null;
+
+function initAdminPanel() {
+    const btnUnlock = document.getElementById('btn-unlock-config');
+    if (btnUnlock) {
+        btnUnlock.addEventListener('click', () => {
+            const prodId = document.getElementById('admin-product-id').value.trim();
+            if (!prodId) {
+                showToast('Please enter a valid Product ID', 'warning');
+                return;
+            }
+            if (activeConfigReq) {
+                activeConfigReq.productId = prodId;
+                if (activeConfigReq.status === 'Pending Product ID') {
+                    activeConfigReq.status = 'Configuring';
+                    populateOnboardingRequestLog();
+                }
+                unlockFields(prodId);
+                showToast(`Product Setup unlocked with ID: ${prodId}`);
+            }
+        });
+    }
+
+    const btnGenUuid = document.getElementById('btn-generate-uuid');
+    if (btnGenUuid) {
+        btnGenUuid.addEventListener('click', () => {
+            const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            const input = document.getElementById('cfg-code');
+            if (input) input.value = uuid;
+            showToast('New UUID Code generated successfully');
+        });
+    }
+
+    const btnAddFeeRow = document.getElementById('btn-add-config-row');
+    if (btnAddFeeRow) {
+        btnAddFeeRow.addEventListener('click', () => {
+            addConfigFeeRow('', 'Monthly', true);
+        });
+    }
+
+    const step1Form = document.getElementById('admin-config-step1-form');
+    if (step1Form) {
+        step1Form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!activeConfigReq) return;
+
+            activeConfigReq.code = document.getElementById('cfg-code').value;
+            activeConfigReq.groupId = document.getElementById('cfg-group-id').value;
+            activeConfigReq.instituteId = document.getElementById('cfg-institute-id').value;
+            activeConfigReq.locationId = document.getElementById('cfg-location-id').value;
+            activeConfigReq.educationId = document.getElementById('cfg-education-id').value;
+            activeConfigReq.classId = document.getElementById('cfg-class-id').value;
+
+            const feeRows = [];
+            document.querySelectorAll('#config-sub-rows-list .config-sub-row').forEach(row => {
+                const feeType = row.querySelector('.cfg-fee-type').value;
+                const type = row.querySelector('.cfg-fee-type-sel').value;
+                const active = row.querySelector('.cfg-fee-active').checked;
+                if (feeType) {
+                    feeRows.push({ feeType, type, active });
+                }
+            });
+            activeConfigReq.feeRows = feeRows;
+            activeConfigReq.status = 'Review Mappings';
+            activeConfigReq.updatedOn = new Date().toLocaleString();
+
+            populateOnboardingRequestLog();
+
+            document.getElementById('step-indicator-1').classList.remove('active');
+            document.getElementById('step-indicator-1').classList.add('completed');
+            document.getElementById('step-indicator-2').classList.add('active');
+
+            document.getElementById('admin-step1-panel').style.display = 'none';
+            document.getElementById('admin-step2-panel').style.display = '';
+
+            populateStep2Metrics();
+        });
+    }
+
+    const btnBack1 = document.getElementById('btn-back-to-step1');
+    if (btnBack1) {
+        btnBack1.addEventListener('click', () => {
+            document.getElementById('step-indicator-2').classList.remove('active');
+            document.getElementById('step-indicator-1').classList.remove('completed');
+            document.getElementById('step-indicator-1').classList.add('active');
+
+            document.getElementById('admin-step2-panel').style.display = 'none';
+            document.getElementById('admin-step1-panel').style.display = '';
+        });
+    }
+
+    const btnComplete = document.getElementById('btn-complete-onboarding');
+    if (btnComplete) {
+        btnComplete.addEventListener('click', () => {
+            if (!activeConfigReq) return;
+
+            activeConfigReq.status = 'Completed';
+            activeConfigReq.updatedOn = new Date().toLocaleString();
+
+            const apiKeyEntry = {
+                gile: activeConfigReq.gile,
+                inst: activeConfigReq.name,
+                location: activeConfigReq.location,
+                clientId: 'gq_client_' + activeConfigReq.instituteId.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+                webhookStatus: 'Pending',
+                endpoints: 0
+            };
+            DB.apiKeys.push(apiKeyEntry);
+
+            const newInstObj = {
+                id: activeConfigReq.instituteId,
+                name: activeConfigReq.name,
+                gile: activeConfigReq.gile,
+                location: activeConfigReq.location,
+                education: activeConfigReq.education,
+                studentsCount: 0,
+                onboardDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }),
+                gmv: 0,
+                transactions: 0,
+                status: 'active',
+                penetrationRate: 0.0,
+                gateways: ['Razorpay'],
+                rates: { emi: 50, pg: 50, mandate: 0 },
+                contact: { name: 'Admin', email: 'admin@' + activeConfigReq.name.toLowerCase().replace(/[^a-z0-9]+/g, '') + '.edu', phone: '—' },
+                recentTransactions: [],
+                topStudents: []
+            };
+            DB.institutes.push(newInstObj);
+
+            populateApiTable();
+            populateInstituteTable();
+            populateSupportGileSelect();
+            populateOnboardingRequestLog();
+            populateAdminPendingRequests();
+
+            showToast(`🎉 Onboarding setup for "${activeConfigReq.name}" completed successfully! Webhook configured.`);
+            
+            activeConfigReq = null;
+            resetAdminConfigurator();
+        });
+    }
+}
+
+function resetAdminConfigurator() {
+    document.getElementById('step-indicator-2').classList.remove('active');
+    document.getElementById('step-indicator-1').classList.remove('completed');
+    document.getElementById('step-indicator-1').classList.add('active');
+
+    document.getElementById('admin-step2-panel').style.display = 'none';
+    document.getElementById('admin-step1-panel').style.display = '';
+
+    document.getElementById('admin-config-step1-form').reset();
+    document.getElementById('cfg-serial-id').value = '';
+    document.getElementById('cfg-code').value = '';
+    document.getElementById('config-sub-rows-list').innerHTML = '';
+    
+    document.getElementById('meta-created-on').textContent = '—';
+    document.getElementById('meta-updated-on').textContent = '—';
+
+    document.getElementById('admin-fields-form-block').classList.add('locked');
+    document.getElementById('admin-lock-overlay-msg').innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Please select a GILE and enter Product ID
+    `;
+
+    document.getElementById('admin-unlock-section').style.display = 'none';
+}
+
+function populateAdminPendingRequests() {
+    const tbody = document.getElementById('admin-pending-requests-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    DB.onboardingRequests.forEach(req => {
+        const isComp = req.status === 'Completed';
+        const actionHtml = isComp ? 
+            `<span style="color:var(--color-success); font-weight:600;">✓ Completed</span>` :
+            `<button class="btn-admin-action" onclick="selectAdminRequest('${req.id}')">Configure</button>`;
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="padding-left:16px;">
+                    <div class="table-primary-text" style="font-weight:600;">${req.name}</div>
+                    <div class="table-secondary-text" style="font-size:11px;">${req.gile}</div>
+                </td>
+                <td><span class="badge-status ${isComp ? 'success' : 'pending'}" style="font-size:10px;">${req.status}</span></td>
+                <td style="text-align:right; padding-right:16px;">${actionHtml}</td>
+            </tr>
+        `;
+    });
+}
+
+function selectAdminRequest(reqId) {
+    activeConfigReq = DB.onboardingRequests.find(r => r.id === reqId);
+    if (!activeConfigReq) return;
+
+    const unlockSec = document.getElementById('admin-unlock-section');
+    unlockSec.style.display = '';
+    document.getElementById('unlock-card-title').textContent = `Unlock Setup — ${activeConfigReq.name}`;
+
+    document.getElementById('admin-product-id').value = activeConfigReq.productId || '';
+    document.getElementById('cfg-serial-id').value = 'GQ-CONF-' + reqId.split('-')[1];
+
+    if (activeConfigReq.productId) {
+        unlockFields(activeConfigReq.productId);
+    } else {
+        document.getElementById('admin-fields-form-block').classList.add('locked');
+        document.getElementById('admin-lock-overlay-msg').innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Please enter Product ID to unlock fields for ${activeConfigReq.name}
+        `;
+    }
+}
+
+function unlockFields(productId) {
+    if (!activeConfigReq) return;
+
+    const block = document.getElementById('admin-fields-form-block');
+    block.classList.remove('locked');
+
+    document.getElementById('cfg-group-id').value = activeConfigReq.groupId || activeConfigReq.group.toUpperCase().replace(/\s+/g, '-');
+    document.getElementById('cfg-institute-id').value = activeConfigReq.instituteId || activeConfigReq.name.toUpperCase().replace(/\s+/g, '-');
+    document.getElementById('cfg-location-id').value = activeConfigReq.locationId || activeConfigReq.location.toUpperCase().replace(/\s+/g, '-');
+    document.getElementById('cfg-education-id').value = activeConfigReq.educationId || activeConfigReq.education.toUpperCase().replace(/\s+/g, '-');
+    document.getElementById('cfg-class-id').value = activeConfigReq.classId || 'ALL-CLASSES';
+
+    if (!activeConfigReq.code) {
+        activeConfigReq.code = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    document.getElementById('cfg-code').value = activeConfigReq.code;
+
+    document.getElementById('meta-created-on').textContent = activeConfigReq.createdOn;
+    document.getElementById('meta-updated-on').textContent = activeConfigReq.updatedOn;
+
+    const list = document.getElementById('config-sub-rows-list');
+    list.innerHTML = '';
+    if (activeConfigReq.feeRows && activeConfigReq.feeRows.length > 0) {
+        activeConfigReq.feeRows.forEach(row => {
+            addConfigFeeRow(row.feeType, row.type, row.active);
+        });
+    } else {
+        addConfigFeeRow('Academic Tuition Fee', 'Monthly', true);
+    }
+}
+
+function addConfigFeeRow(feeType = '', type = 'Monthly', active = true) {
+    const list = document.getElementById('config-sub-rows-list');
+    if (!list) return;
+
+    const div = document.createElement('div');
+    div.className = 'config-sub-row';
+    div.innerHTML = `
+        <input type="text" class="cfg-fee-type" placeholder="Fee Type ID" value="${feeType}" required style="font-size:12px;">
+        <select class="cfg-fee-type-sel form-select-style" style="font-size:12px; width:100%;">
+            <option value="Monthly" ${type === 'Monthly' ? 'selected' : ''}>Monthly</option>
+            <option value="Quarterly" ${type === 'Quarterly' ? 'selected' : ''}>Quarterly</option>
+            <option value="Annually" ${type === 'Annually' ? 'selected' : ''}>Annually</option>
+            <option value="Custom" ${type === 'Custom' ? 'selected' : ''}>Custom</option>
+        </select>
+        <div class="active-toggle-container">
+            <input type="checkbox" class="cfg-fee-active" ${active ? 'checked' : ''} style="width:16px;height:16px;">
+            <label style="font-size:11px;font-weight:600;margin:0;">Active</label>
+        </div>
+        <button type="button" class="btn-remove-row" onclick="this.closest('.config-sub-row').remove()">×</button>
+    `;
+    list.appendChild(div);
+}
+
+function populateStep2Metrics() {
+    const tbody = document.getElementById('admin-step2-metrics-table');
+    if (!tbody || !activeConfigReq) return;
+
+    const feeSummary = activeConfigReq.feeRows.map(r => 
+        `${r.feeType} (${r.type}, ${r.active ? 'Active' : 'Inactive'})`
+    ).join('<br>');
+
+    tbody.innerHTML = `
+        <tr><td><strong>Product ID</strong></td><td><span style="font-family:monospace;font-weight:700;">${activeConfigReq.productId}</span></td></tr>
+        <tr><td><strong>Serial ID</strong></td><td><span style="font-family:monospace;font-weight:600;">GQ-CONF-${activeConfigReq.id.split('-')[1]}</span></td></tr>
+        <tr><td><strong>UUID Config Code</strong></td><td><span style="font-family:monospace;font-size:11px;color:var(--color-primary);">${activeConfigReq.code}</span></td></tr>
+        <tr><td><strong>Group ID</strong></td><td><code>${activeConfigReq.groupId}</code></td></tr>
+        <tr><td><strong>Institute ID</strong></td><td><code>${activeConfigReq.instituteId}</code></td></tr>
+        <tr><td><strong>Location ID</strong></td><td><code>${activeConfigReq.locationId}</code></td></tr>
+        <tr><td><strong>Education Type ID</strong></td><td><code>${activeConfigReq.educationId}</code></td></tr>
+        <tr><td><strong>Class ID</strong></td><td><code>${activeConfigReq.classId}</code></td></tr>
+        <tr><td><strong>Fee Mappings</strong></td><td>${feeSummary || 'No mappings defined'}</td></tr>
+        <tr><td><strong>Created Timestamp</strong></td><td>${activeConfigReq.createdOn}</td></tr>
+        <tr><td><strong>Last Updated Timestamp</strong></td><td>${activeConfigReq.updatedOn}</td></tr>
+    `;
+}
+
+// Expose globally
+window.selectAdminRequest = selectAdminRequest;
+window.toggleGroupRow = toggleGroupRow;
+window.redirectToFms = redirectToFms;
+

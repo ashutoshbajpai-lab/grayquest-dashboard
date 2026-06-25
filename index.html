@@ -87,6 +87,10 @@
                     <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <span>Support</span>
                 </a>
+                <a href="#" class="menu-item" data-tab="admin">
+                    <svg class="menu-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Admin Panel</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -1439,6 +1443,204 @@
                                     <!-- Dynamic Tickets from app.js -->
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= ADMIN CONFIGURATOR PANEL ================= -->
+                <div class="tab-content" id="admin-tab">
+                    <div class="content-header">
+                        <div>
+                            <h1 class="page-title">Onboarding Admin Configurator</h1>
+                            <p class="page-subtitle">Configure system mappings, UUID codes, and dynamic fee routing rules for pending pipelines</p>
+                        </div>
+                    </div>
+
+                    <!-- Steps Indicator -->
+                    <div class="admin-steps" id="admin-flow-steps">
+                        <div class="admin-step active" id="step-indicator-1">
+                            <span class="admin-step-num">1</span>
+                            <span class="admin-step-label">Step 1: Configurations</span>
+                        </div>
+                        <div class="admin-step" id="step-indicator-2">
+                            <span class="admin-step-num">2</span>
+                            <span class="admin-step-label">Step 2: Metrics Preview</span>
+                        </div>
+                    </div>
+
+                    <div class="grid-3-col" style="grid-template-columns: 1.1fr 1.9fr; gap: 24px;">
+                        
+                        <!-- Left Panel: Select Request & Unlock -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <!-- Active/Pending Requests list -->
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Select Onboarding Request</h3>
+                                    <span class="card-subtitle">Pending configurations requiring setup</span>
+                                </div>
+                                <div class="card-body scrollable-y" style="max-height: 280px; padding: 0;">
+                                    <div class="table-container" style="border: none; box-shadow: none;">
+                                        <table class="data-table" style="font-size: 12px;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="padding-left: 16px;">Institute</th>
+                                                    <th>Status</th>
+                                                    <th style="text-align: right; padding-right: 16px;">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="admin-pending-requests-tbody">
+                                                <!-- Populated dynamically from app.js -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Product ID Unlock Card -->
+                            <div class="dashboard-card" id="admin-unlock-section" style="display: none;">
+                                <div class="card-header">
+                                    <h3 class="card-title" id="unlock-card-title">Unlock Product Setup</h3>
+                                    <span class="card-subtitle">Enter Product ID to open configuration fields</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label for="admin-product-id">Product ID *</label>
+                                        <div class="unlock-input-row">
+                                            <input type="text" id="admin-product-id" placeholder="e.g. GQ-PROD-99" style="width: 100%;">
+                                            <button class="btn btn-primary" id="btn-unlock-config">Unlock</button>
+                                        </div>
+                                        <span class="sub-label" style="margin-top: 4px; display: block; color: var(--color-text-light);">Must be set to unlock configuration fields below.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Configurations Step 1 / Step 2 -->
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            
+                            <!-- STEP 1 VIEW -->
+                            <div class="dashboard-card" id="admin-step1-panel">
+                                <div class="card-header">
+                                    <h3 class="card-title">GILE Configuration Fields</h3>
+                                    <span class="card-subtitle">Core metadata setup and fee schedules</span>
+                                </div>
+                                <div class="card-body">
+                                    <!-- LOCKED FIELDS WRAPPER -->
+                                    <div class="admin-fields-block locked" id="admin-fields-form-block">
+                                        <div class="locked-overlay-text" id="admin-lock-overlay-msg">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                            Please select a GILE and enter Product ID
+                                        </div>
+
+                                        <form id="admin-config-step1-form">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label for="cfg-serial-id">Serial ID (Generated)</label>
+                                                    <input type="text" id="cfg-serial-id" readonly style="background: var(--color-bg-app); font-weight: 600; font-family: monospace;">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="cfg-code">Code (UUID4)</label>
+                                                    <input type="text" id="cfg-code" placeholder="Automatically generated UUID" required readonly style="font-family: monospace; font-size: 11px;">
+                                                    <button type="button" class="uuid-action-btn" id="btn-generate-uuid">Generate UUID Code</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-row" style="margin-top: 12px;">
+                                                <div class="form-group">
+                                                    <label for="cfg-group-id">Group ID *</label>
+                                                    <input type="text" id="cfg-group-id" placeholder="e.g. DY-GROUP-8" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="cfg-institute-id">Institute ID *</label>
+                                                    <input type="text" id="cfg-institute-id" placeholder="e.g. ENGG-PUNE" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-row" style="margin-top: 12px;">
+                                                <div class="form-group">
+                                                    <label for="cfg-location-id">Location ID *</label>
+                                                    <input type="text" id="cfg-location-id" placeholder="e.g. MH-PUNE-01" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="cfg-education-id">Education Type ID *</label>
+                                                    <input type="text" id="cfg-education-id" placeholder="e.g. HIGHER-EDU" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-row" style="margin-top: 12px;">
+                                                <div class="form-group" style="max-width: 50%;">
+                                                    <label for="cfg-class-id">Class ID *</label>
+                                                    <input type="text" id="cfg-class-id" placeholder="e.g. BTECH-2026" required>
+                                                </div>
+                                            </div>
+
+                                            <!-- Fee Configuration Rows -->
+                                            <div class="config-sub-rows-wrapper">
+                                                <div class="fee-header-section-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                                    <div>
+                                                        <label style="font-weight: 700; color: var(--color-text-dark); font-size: 13px;">Configure Fee Mappings</label>
+                                                        <span class="sub-label" style="font-size: 11px;">Configure fee identifiers and payment schedules</span>
+                                                    </div>
+                                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-add-config-row">+ Add Fee Row</button>
+                                                </div>
+
+                                                <div id="config-sub-rows-list">
+                                                    <!-- Dynamically loaded inputs -->
+                                                </div>
+                                            </div>
+
+                                            <!-- Metadata Fields -->
+                                            <div class="metadata-grid">
+                                                <div class="meta-field-item">
+                                                    <span class="meta-field-label">Created On</span>
+                                                    <span class="meta-field-val" id="meta-created-on">—</span>
+                                                </div>
+                                                <div class="meta-field-item">
+                                                    <span class="meta-field-label">Updated On</span>
+                                                    <span class="meta-field-val" id="meta-updated-on">—</span>
+                                                </div>
+                                                <div class="meta-field-item">
+                                                    <span class="meta-field-label">Deleted On</span>
+                                                    <span class="meta-field-val" id="meta-deleted-on">Active</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-footer" style="margin-top: 24px;">
+                                                <button type="submit" class="btn btn-primary" style="width: 100%;">Save & Next</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2 VIEW (Hidden by default) -->
+                            <div class="dashboard-card" id="admin-step2-panel" style="display: none;">
+                                <div class="card-header">
+                                    <h3 class="card-title">Onboarding Configuration Review</h3>
+                                    <span class="card-subtitle">Review active mappings and system metrics before deployment</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-container" style="margin-bottom: 24px;">
+                                        <table class="data-table" style="font-size: 12px;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Parameter</th>
+                                                    <th>Configured Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="admin-step2-metrics-table">
+                                                <!-- Dynamic mappings details -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="form-footer" style="display: flex; gap: 12px;">
+                                        <button type="button" class="btn btn-secondary" id="btn-back-to-step1" style="flex: 1;">Back to Fields</button>
+                                        <button type="button" class="btn btn-primary" id="btn-complete-onboarding" style="flex: 1.5; background: var(--color-success); border-color: var(--color-success);">Complete Onboarding Setup</button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
