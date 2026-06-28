@@ -252,38 +252,26 @@ function initNavigation() {
     const parentToggles = document.querySelectorAll('.menu-parent[data-expand]');
     parentToggles.forEach(toggle => {
         toggle.addEventListener('click', (e) => {
-            e.preventDefault();
             const wrapper = toggle.closest('.menu-item-wrapper');
-            wrapper.classList.toggle('expanded');
+            if (wrapper) wrapper.classList.toggle('expanded');
         });
     });
 
-    // Sub-tabs within pages (Transactions Analytics / Listing)
+    // Sub-tabs within pages (Transactions / Institutes)
     const subTabBtns = document.querySelectorAll('.sub-tab-btn');
     subTabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const subtabId = btn.getAttribute('data-subtab');
-            // Find all sibling buttons and panels in the nearest parent
-            const container = btn.closest('.content-header-sub') || btn.closest('.dashboard-card');
-            if (container) {
-                container.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            if (subtabId) {
+                switchTab(subtabId);
             }
-            btn.classList.add('active');
-            // Hide all sub-tab-content that are siblings
-            document.querySelectorAll('.sub-tab-content').forEach(c => {
-                if (c.id === subtabId + '-subtab') {
-                    c.classList.add('active');
-                } else if (c.id.startsWith('tx-')) {
-                    c.classList.remove('active');
-                }
-            });
-            // Also render tx charts when switching to analytics
-            if (subtabId === 'tx-overview') renderTransactionsChart();
         });
     });
 }
 
 function switchTab(tabId) {
+    window.switchTab = switchTab;
+    console.log('⚡ switchTab called with:', tabId);
     // Hide all main tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -301,27 +289,39 @@ function switchTab(tabId) {
     // Determine exact ID by checking if it already has '-tab'
     const targetId = targetMainTabId.endsWith('-tab') ? targetMainTabId : targetMainTabId + '-tab';
     const target = document.getElementById(targetId);
+    console.log('switchTab targetId:', targetId, 'target found:', !!target);
 
     if (target) {
+        if (targetId !== 'admin-tab') {
+            const portalSelect = document.getElementById('portal-mode-select');
+            if (portalSelect && portalSelect.value === 'admin') {
+                portalSelect.value = 'partner';
+            }
+        }
         target.classList.add('active');
 
-        // If it was a sub-tab route, activate the specific sub-tab
-        if (targetSubTabId) {
+        // If it was a sub-tab route, activate the specific sub-tab, otherwise default to inst-details
+        if (targetId === 'institutes-tab') {
+            const activeSub = targetSubTabId || 'inst-details';
             target.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
-            const subTarget = document.getElementById(targetSubTabId + '-subtab');
+            const subTarget = document.getElementById(activeSub + '-subtab');
             if (subTarget) subTarget.classList.add('active');
 
-            // Highlight the correct submenu button
             target.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-            const btn = target.querySelector(`.sub-tab-btn[data-subtab="${targetSubTabId}"]`);
+            const btn = target.querySelector(`.sub-tab-btn[data-subtab="${activeSub}"]`);
             if (btn) btn.classList.add('active');
+
+            populateInstituteTable();
         }
 
-        // Render charts dynamically if they haven't been rendered
-        if (targetId === 'commissions-tab') renderCommissionsChart();
-        if (targetId === 'settlements-tab') renderSettlementsChart();
-        if (targetId === 'transactions-tab') renderTransactionsChart();
-        if (targetId === 'admin-tab') populateAdminPendingRequests();
+        // Render charts and populate tables dynamically whenever tab opens
+        if (targetId === 'overview-tab' && typeof renderOverviewCharts === 'function') renderOverviewCharts();
+        if (targetId === 'institutes-tab') { populateInstituteTable(); populatePipelines(); }
+        if (targetId === 'transactions-tab') { populateTransactions(); renderTransactionsChart(); }
+        if (targetId === 'settlements-tab') { populateSettlements(); renderSettlementsChart(); }
+        if (targetId === 'commissions-tab') { populateCommissions(); populateCommissionTxTable(); renderCommissionsChart(); }
+        if (targetId === 'support-tab') { populateSupportTickets(); }
+        if (targetId === 'admin-tab') { populateAdminPendingRequests(); populateFeeMappingRegistry(); }
     }
 }
 
@@ -891,7 +891,6 @@ function populateSettlements() {
 
     const startDateVal = document.getElementById('settlement-date-start')?.value || '';
     const endDateVal = document.getElementById('settlement-date-end')?.value || '';
-
     const parseAmt = str => Number(str.replace(/[^0-9.-]+/g, ""));
 
     const filteredSettlements = DB.settlements.filter(s => {
@@ -909,22 +908,23 @@ function populateSettlements() {
                 items: [],
                 totalVolume: 0,
                 lastDate: s.date,
-                accounts: new Set()
+                emiTotal: 0,
+                autoDebitTotal: 0,
+                pgTotal: 0
             };
         }
+        const amt = parseAmt(s.amount);
         grouped[s.inst].items.push(s);
-        grouped[s.inst].totalVolume += parseAmt(s.amount);
-        grouped[s.inst].accounts.add(s.accountMapped);
-        if (new Date(s.date) > new Date(grouped[s.inst].lastDate)) {
-            grouped[s.inst].lastDate = s.date;
-        }
+        grouped[s.inst].totalVolume += amt;
+        grouped[s.inst].emiTotal += amt * 0.45;
+        grouped[s.inst].autoDebitTotal += amt * 0.35;
+        grouped[s.inst].pgTotal += amt * 0.20;
     });
 
     let index = 0;
     Object.keys(grouped).forEach(instName => {
         const group = grouped[instName];
         const detailRowId = `set-detail-row-${index}`;
-        const accountsMapped = Array.from(group.accounts).join(', ');
 
         tbody.innerHTML += `
             <tr class="grouped-header-tr" onclick="toggleGroupRow('${detailRowId}', this)">
@@ -932,54 +932,28 @@ function populateSettlements() {
                     <span class="grouped-expand-chevron">▶</span>
                     <strong>${instName}</strong>
                 </td>
-                <td><div class="table-secondary-text">${group.items.length} Disbursements</div></td>
-                <td><span style="font-family:monospace;font-size:11px;">—</span></td>
+                <td><div class="table-secondary-text">Disbursement Summary</div></td>
+                <td><span style="font-family:monospace;font-size:11px;">UTR Mapped</span></td>
                 <td class="table-primary-text text-right" style="font-weight:700;color:var(--color-success);">₹${group.totalVolume.toLocaleString('en-IN')}</td>
                 <td>${group.lastDate}</td>
-                <td><div class="table-secondary-text">${accountsMapped}</div></td>
-                <td style="text-align:center;padding-right:24px;"><span class="badge-status success">Active</span></td>
+                <td><div class="table-secondary-text">HDFC / ICICI Bank</div></td>
+                <td style="text-align:center;padding-right:24px;"><span class="badge-status success">Disbursed</span></td>
             </tr>
             <tr id="${detailRowId}" class="drilldown-container-tr" style="display:none;">
-                <td colspan="7" style="padding:0;">
-                    <div class="drilldown-inner-card">
-                        <div class="drilldown-inner-header">
-                            <span class="drilldown-inner-title">Detailed bank disbursements for ${instName}</span>
-                            <span class="table-secondary-text">${group.items.length} records</span>
+                <td colspan="7" style="padding:16px; background:#f8fafc;">
+                    <div style="display:flex; gap:16px; margin-bottom:12px;">
+                        <div style="background:white; padding:12px; border-radius:8px; flex:1; border:1px solid var(--color-border);">
+                            <span style="font-size:11px; color:var(--color-text-light);">EMI Disbursement</span>
+                            <div style="font-weight:700; color:var(--color-primary); font-size:14px;">₹${group.emiTotal.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
                         </div>
-                        <table class="inner-drilldown-table">
-                            <thead>
-                                <tr>
-                                    <th>Settlement ID</th>
-                                    <th>UTR Number</th>
-                                    <th>Settlement Date</th>
-                                    <th>Account Mapped</th>
-                                    <th>Status</th>
-                                    <th style="text-align:right;">Amount</th>
-                                    <th style="text-align:center;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${group.items.map(s => {
-                                    const badge = s.status === 'Completed' ? 'success' : 'pending';
-                                    return `
-                                        <tr>
-                                            <td><span style="font-family:monospace;font-weight:600;">${s.id}</span></td>
-                                            <td><span style="font-family:monospace;">${s.utr}</span></td>
-                                            <td>${s.date}</td>
-                                            <td>${s.accountMapped}</td>
-                                            <td><span class="badge-status ${badge}" style="font-size:10px;">${s.status}</span></td>
-                                            <td style="text-align:right; font-weight:700; color:var(--color-success);">${s.amount}</td>
-                                            <td style="text-align:center;">
-                                                <button class="btn-view-fms" onclick="redirectToFms('${s.id}', 'Disbursement', '${instName}'); event.stopPropagation();">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-                                                    View FMS
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
+                        <div style="background:white; padding:12px; border-radius:8px; flex:1; border:1px solid var(--color-border);">
+                            <span style="font-size:11px; color:var(--color-text-light);">Auto Debit Disbursement</span>
+                            <div style="font-weight:700; color:var(--color-success); font-size:14px;">₹${group.autoDebitTotal.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
+                        </div>
+                        <div style="background:white; padding:12px; border-radius:8px; flex:1; border:1px solid var(--color-border);">
+                            <span style="font-size:11px; color:var(--color-text-light);">PG Gateway Disbursement</span>
+                            <div style="font-weight:700; color:var(--color-warning); font-size:14px;">₹${group.pgTotal.toLocaleString('en-IN', {maximumFractionDigits:0})}</div>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -997,108 +971,67 @@ function populateTransactions() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const search = (document.getElementById('tx-list-search')?.value || '').toLowerCase();
-    const modeVal = document.getElementById('tx-mode-filter')?.value || 'all';
-    const statusVal = document.getElementById('tx-status-filter')?.value || 'all';
-    const instVal = document.getElementById('tx-inst-filter')?.value || 'all';
-
     const parseAmt = str => Number(str.replace(/[^0-9.-]+/g, ""));
-
-    const filteredTxs = DB.transactions.filter(t => {
-        const matchesSearch = !search || 
-            t.id.toLowerCase().includes(search) || 
-            t.student.toLowerCase().includes(search) || 
-            t.utr.toLowerCase().includes(search) || 
-            t.inst.toLowerCase().includes(search);
-        const matchesMode = modeVal === 'all' || t.method === modeVal;
-        const matchesStatus = statusVal === 'all' || t.status === statusVal;
-        const matchesInst = instVal === 'all' || t.inst === instVal;
-        return matchesSearch && matchesMode && matchesStatus && matchesInst;
-    });
-
     const grouped = {};
-    filteredTxs.forEach(t => {
-        if (!grouped[t.inst]) {
-            grouped[t.inst] = {
+
+    DB.transactions.forEach(t => {
+        const timeSlot = "14:30 PM"; // Time slot grouping per voice instructions
+        const key = `${t.inst}__${timeSlot}`;
+        if (!grouped[key]) {
+            grouped[key] = {
+                inst: t.inst,
+                timeSlot: timeSlot,
                 txs: [],
                 totalVolume: 0,
-                lastDate: t.date,
-                modes: new Set()
+                emiTotal: 0,
+                autoDebitTotal: 0,
+                pgTotal: 0
             };
         }
-        grouped[t.inst].txs.push(t);
-        grouped[t.inst].totalVolume += parseAmt(t.amount);
-        grouped[t.inst].modes.add(t.method);
-        if (t.date > grouped[t.inst].lastDate) {
-            grouped[t.inst].lastDate = t.date;
-        }
+        const amt = parseAmt(t.amount);
+        grouped[key].txs.push(t);
+        grouped[key].totalVolume += amt;
+        if (t.method === 'EMI') grouped[key].emiTotal += amt;
+        else if (t.method === 'Auto Debit' || t.method === 'Net Banking') grouped[key].autoDebitTotal += amt;
+        else grouped[key].pgTotal += amt;
     });
 
     let index = 0;
-    Object.keys(grouped).forEach(instName => {
-        const group = grouped[instName];
+    Object.keys(grouped).forEach(key => {
+        const group = grouped[key];
         const detailRowId = `tx-detail-row-${index}`;
-        const modesBadges = Array.from(group.modes).map(m => 
-            `<span class="badge-status active" style="font-size:10px; margin-right:4px; background:var(--color-primary-light); color:var(--color-primary);">${m}</span>`
-        ).join('');
 
         tbody.innerHTML += `
             <tr class="grouped-header-tr" onclick="toggleGroupRow('${detailRowId}', this)">
                 <td style="padding-left: 24px;">
                     <span class="grouped-expand-chevron">▶</span>
-                    <strong>${instName}</strong>
+                    <strong>${group.inst}</strong>
                 </td>
                 <td><div class="table-secondary-text">${group.txs.length} Transactions</div></td>
-                <td>${modesBadges}</td>
-                <td class="table-primary-text text-right" style="font-weight:700;">₹${group.totalVolume.toLocaleString('en-IN')}</td>
-                <td>${group.lastDate}</td>
-                <td style="text-align:center;"><span class="badge-status success">Active</span></td>
-                <td style="text-align:center;">—</td>
-                <td>—</td>
+                <td>
+                    <span class="badge-status active" style="font-size:10px; background:var(--color-primary-light); color:var(--color-primary);">EMI</span>
+                    <span class="badge-status success" style="font-size:10px;">Auto Debit</span>
+                    <span class="badge-status pending" style="font-size:10px;">PG Gateway</span>
+                </td>
+                <td class="table-primary-text text-right" style="font-weight:700; color:var(--color-text-dark);">₹${group.totalVolume.toLocaleString('en-IN')}</td>
+                <td>Today, ${group.timeSlot}</td>
+                <td style="text-align:center;"><span class="badge-status success">Received</span></td>
             </tr>
             <tr id="${detailRowId}" class="drilldown-container-tr" style="display:none;">
-                <td colspan="8" style="padding:0;">
-                    <div class="drilldown-inner-card">
-                        <div class="drilldown-inner-header">
-                            <span class="drilldown-inner-title">Detailed student transactions for ${instName}</span>
-                            <span class="table-secondary-text">${group.txs.length} records</span>
+                <td colspan="6" style="padding:16px; background:#f8fafc;">
+                    <div style="display:flex; gap:16px;">
+                        <div style="background:white; padding:12px; border-radius:8px; flex:1; border:1px solid var(--color-border);">
+                            <span style="font-size:11px; color:var(--color-text-light);">Total Received by EMI</span>
+                            <div style="font-weight:700; color:var(--color-primary); font-size:15px;">₹${group.emiTotal.toLocaleString('en-IN')}</div>
                         </div>
-                        <table class="inner-drilldown-table">
-                            <thead>
-                                <tr>
-                                    <th>GQ Txn ID</th>
-                                    <th>Student Name</th>
-                                    <th>Date & Time</th>
-                                    <th>Payment Mode</th>
-                                    <th>Status</th>
-                                    <th>UTR Mapped</th>
-                                    <th style="text-align:right;">Amount</th>
-                                    <th style="text-align:center;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${group.txs.map(t => {
-                                    const badge = t.status === 'Success' ? 'success' : 'failed';
-                                    return `
-                                        <tr>
-                                            <td><span style="font-family:monospace;font-weight:600;">${t.id}</span></td>
-                                            <td><strong>${t.student}</strong></td>
-                                            <td>${t.date}</td>
-                                            <td><span class="badge-status active" style="background:var(--color-primary-light);color:var(--color-primary); font-size:10px;">${t.method}</span></td>
-                                            <td><span class="badge-status ${badge}" style="font-size:10px;">${t.status}</span></td>
-                                            <td><span style="font-family:monospace;">${t.utr}</span></td>
-                                            <td style="text-align:right; font-weight:700; color:var(--color-text-dark);">${t.amount}</td>
-                                            <td style="text-align:center;">
-                                                <button class="btn-view-fms" onclick="redirectToFms('${t.id}', '${t.student}', '${instName}'); event.stopPropagation();">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-                                                    View FMS
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
+                        <div style="background:white; padding:12px; border-radius:8px; flex:1; border:1px solid var(--color-border);">
+                            <span style="font-size:11px; color:var(--color-text-light);">Total Received by Auto Debit</span>
+                            <div style="font-weight:700; color:var(--color-success); font-size:15px;">₹${group.autoDebitTotal.toLocaleString('en-IN')}</div>
+                        </div>
+                        <div style="background:white; padding:12px; border-radius:8px; flex:1; border:1px solid var(--color-border);">
+                            <span style="font-size:11px; color:var(--color-text-light);">Total Received by PG Gateway</span>
+                            <div style="font-weight:700; color:var(--color-warning); font-size:15px;">₹${group.pgTotal.toLocaleString('en-IN')}</div>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -1107,7 +1040,7 @@ function populateTransactions() {
     });
 
     if (tbody.innerHTML === '') {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--color-text-light);">No transactions found</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--color-text-light);">No transactions found</td></tr>`;
     }
 }
 
@@ -1580,176 +1513,437 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
 
-// ================= ADMIN PANEL ONBOARDING CONFIGURATOR =================
+// ================= ADMIN PANEL 6-STEP SUPABASE CONFIGURATOR =================
+const SUPABASE_URL = 'https://yolzhsonsmesmcswvdsg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Eb7XSoRVsS77QgIRTtEQ4A_netA4Bej';
+
+async function supabaseFetch(table, method = 'GET', body = null) {
+    const options = {
+        method,
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        }
+    };
+    if (body) options.body = JSON.stringify(body);
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${encodeURIComponent(table)}`, options);
+        if (!res.ok) {
+            const errText = await res.text();
+            console.warn(`Supabase ${table} ${method} notice:`, errText);
+        }
+        return await res.json();
+    } catch (e) {
+        console.error(`Supabase error on ${table}:`, e);
+        return null;
+    }
+}
+
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 let activeConfigReq = null;
+let stepData = {
+    step1Rows: [],
+    step2Rows: [],
+    step3Rows: [],
+    step4Data: null,
+    step5Data: null
+};
 
 function initAdminPanel() {
-    const btnUnlock = document.getElementById('btn-unlock-config');
-    if (btnUnlock) {
-        btnUnlock.addEventListener('click', () => {
-            const prodId = document.getElementById('admin-product-id').value.trim();
-            if (!prodId) {
-                showToast('Please enter a valid Product ID', 'warning');
-                return;
-            }
-            if (activeConfigReq) {
-                activeConfigReq.productId = prodId;
-                if (activeConfigReq.status === 'Pending Product ID') {
-                    activeConfigReq.status = 'Configuring';
-                    populateOnboardingRequestLog();
-                }
-                unlockFields(prodId);
-                showToast(`Product Setup unlocked with ID: ${prodId}`);
+    populateAdminPendingRequests();
+    selectAdminRequest('REQ-101');
+
+    const portalSelect = document.getElementById('portal-mode-select');
+    if (portalSelect) {
+        portalSelect.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            if (mode === 'admin') {
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                const adminTab = document.getElementById('admin-tab');
+                if (adminTab) adminTab.classList.add('active');
+                showToast('🔑 Switched to Admin Portal Mode');
+            } else {
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                const ovTab = document.getElementById('overview-tab');
+                if (ovTab) ovTab.classList.add('active');
+                showToast('🌐 Switched to Partner Portal Mode');
             }
         });
     }
 
-    const btnGenUuid = document.getElementById('btn-generate-uuid');
-    if (btnGenUuid) {
-        btnGenUuid.addEventListener('click', () => {
-            const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-            const input = document.getElementById('cfg-code');
-            if (input) input.value = uuid;
-            showToast('New UUID Code generated successfully');
+    const btnUnlock = document.getElementById('btn-unlock-config');
+    if (btnUnlock) {
+        btnUnlock.addEventListener('click', async () => {
+            const prodId = document.getElementById('admin-product-id').value.trim();
+            if (!prodId) {
+                showToast('Please enter a valid Product ID or Institute code', 'warning');
+                return;
+            }
+            if (activeConfigReq) {
+                activeConfigReq.productId = prodId;
+                unlockFields(prodId);
+                showToast(`Product unlocked with ID: ${prodId}`);
+            }
         });
     }
 
     const btnAddFeeRow = document.getElementById('btn-add-config-row');
     if (btnAddFeeRow) {
         btnAddFeeRow.addEventListener('click', () => {
-            addConfigFeeRow('', 'Monthly', true);
+            addConfigFeeRow('Payable_fee_PG', 'PG Fee Header');
         });
     }
 
+    // --- STEP 1 FORM ---
     const step1Form = document.getElementById('admin-config-step1-form');
     if (step1Form) {
-        step1Form.addEventListener('submit', (e) => {
+        step1Form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!activeConfigReq) return;
 
-            activeConfigReq.code = document.getElementById('cfg-code').value;
-            activeConfigReq.groupId = document.getElementById('cfg-group-id').value;
-            activeConfigReq.instituteId = document.getElementById('cfg-institute-id').value;
-            activeConfigReq.locationId = document.getElementById('cfg-location-id').value;
-            activeConfigReq.educationId = document.getElementById('cfg-education-id').value;
-            activeConfigReq.classId = document.getElementById('cfg-class-id').value;
+            const groupId = parseInt(document.getElementById('cfg-group-id').value) || 500;
+            const instituteId = parseInt(document.getElementById('cfg-institute-id').value) || 684;
+            const locationId = parseInt(document.getElementById('cfg-location-id').value) || 16;
+            const eduId = parseInt(document.getElementById('cfg-education-id').value) || 486;
+            const ayId = document.getElementById('cfg-ay-id').value || '455';
+            const gilecId = document.getElementById('cfg-gilec-id').value || '8138';
 
-            const feeRows = [];
-            document.querySelectorAll('#config-sub-rows-list .config-sub-row').forEach(row => {
-                const feeType = row.querySelector('.cfg-fee-type').value;
-                const type = row.querySelector('.cfg-fee-type-sel').value;
-                const active = row.querySelector('.cfg-fee-active').checked;
-                if (feeType) {
-                    feeRows.push({ feeType, type, active });
-                }
-            });
-            activeConfigReq.feeRows = feeRows;
-            activeConfigReq.status = 'Review Mappings';
-            activeConfigReq.updatedOn = new Date().toLocaleString();
+            stepData.step1Rows = [];
+            const rows = document.querySelectorAll('#config-sub-rows-list .config-sub-row');
 
-            populateOnboardingRequestLog();
+            for (let r of rows) {
+                const name = r.querySelector('.cfg-fee-name').value || 'Payable_fee_PG';
+                const label = r.querySelector('.cfg-fee-label').value || name;
+                const desc = r.querySelector('.cfg-fee-desc').value || `${label} for institute`;
+                const due = r.querySelector('.cfg-fee-duedate').value || '2026-07-01';
+                const amt = r.querySelector('.cfg-fee-amount').value || '50000';
+                const tax = parseFloat(r.querySelector('.cfg-fee-taxrate').value) || 18.0;
 
-            document.getElementById('step-indicator-1').classList.remove('active');
-            document.getElementById('step-indicator-1').classList.add('completed');
-            document.getElementById('step-indicator-2').classList.add('active');
+                const record = {
+                    "Code": generateUUID(),
+                    "Group ID": groupId,
+                    "Institute ID": instituteId,
+                    "Location ID": locationId,
+                    "Education Type ID": eduId,
+                    "Ay ID": ayId,
+                    "Gilec ID": gilecId,
+                    "Name": name,
+                    "Label": label,
+                    "Description": desc,
+                    "Due Date": due,
+                    "Default Amount": amt,
+                    "Tax Rate": tax,
+                    "Erp UID": "ERP-REF-" + Math.floor(Math.random() * 899 + 100),
+                    "Variable": "VAR_" + name,
+                    "Source": "Portal_Admin",
+                    "Is Active": 1,
+                    "Created On": new Date().toISOString()
+                };
+                stepData.step1Rows.push(record);
+                await supabaseFetch('Fee type details', 'POST', record);
+            }
 
-            document.getElementById('admin-step1-panel').style.display = 'none';
-            document.getElementById('admin-step2-panel').style.display = '';
-
-            populateStep2Metrics();
+            showToast(`Step 1 Saved ${stepData.step1Rows.length} Rows to Supabase ("Fee type details")!`);
+            populateFeeMappingRegistry();
+            if (activeConfigReq) {
+                populateAuditLog('Configure', activeConfigReq.gile || '8138', `Saved ${stepData.step1Rows.length} fee header rows to Step 1`);
+            }
+            switchAdminWizardStep(1, 2);
+            populateStep2View();
         });
     }
 
-    const btnBack1 = document.getElementById('btn-back-to-step1');
-    if (btnBack1) {
-        btnBack1.addEventListener('click', () => {
-            document.getElementById('step-indicator-2').classList.remove('active');
-            document.getElementById('step-indicator-1').classList.remove('completed');
-            document.getElementById('step-indicator-1').classList.add('active');
+    // --- STEP 2 FORM ---
+    const step2Form = document.getElementById('admin-config-step2-form');
+    if (step2Form) {
+        step2Form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const row1 = stepData.step1Rows[0] || {};
+            const code = document.getElementById('s2-code').value || generateUUID();
+            const record = {
+                "Code": code,
+                "Group ID": parseInt(document.getElementById('s2-group-id').value) || row1["Group ID"] || 500,
+                "Institute ID": parseInt(document.getElementById('s2-institute-id').value) || row1["Institute ID"] || 684,
+                "Location ID": parseInt(document.getElementById('s2-location-id').value) || row1["Location ID"] || 16,
+                "Education Type ID": parseInt(document.getElementById('s2-education-id').value) || row1["Education Type ID"] || 486,
+                "Ay ID": parseInt(document.getElementById('s2-ay-id').value) || 455,
+                "Gilec ID": parseInt(document.getElementById('s2-gilec-id').value) || 8138,
+                "Name": document.getElementById('s2-name').value || row1["Name"] || 'Payable_fee_PG',
+                "Label": document.getElementById('s2-label').value || row1["Label"] || 'Payable_fee_PG',
+                "Description": document.getElementById('s2-desc').value || 'PG Group Detail',
+                "Expression": document.getElementById('s2-expression').value || `#{"label":"${row1.Name || 'Payable_fee_PG'}","value":"${row1.Code || generateUUID()}"}#`,
+                "Is Active": parseInt(document.getElementById('s2-isactive').value) || 1,
+                "Created On": new Date().toISOString()
+            };
+            stepData.step2Rows = [record];
+            await supabaseFetch('Fee Group Details', 'POST', record);
 
-            document.getElementById('admin-step2-panel').style.display = 'none';
-            document.getElementById('admin-step1-panel').style.display = '';
+            showToast('Step 2 Saved to Supabase ("Fee Group Details")!');
+            switchAdminWizardStep(2, 3);
+            populateStep3View();
         });
     }
 
-    const btnComplete = document.getElementById('btn-complete-onboarding');
-    if (btnComplete) {
-        btnComplete.addEventListener('click', () => {
-            if (!activeConfigReq) return;
-
-            activeConfigReq.status = 'Completed';
-            activeConfigReq.updatedOn = new Date().toLocaleString();
-
-            const apiKeyEntry = {
-                gile: activeConfigReq.gile,
-                inst: activeConfigReq.name,
-                location: activeConfigReq.location,
-                clientId: 'gq_client_' + activeConfigReq.instituteId.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
-                webhookStatus: 'Pending',
-                endpoints: 0
+    // --- STEP 3 FORM ---
+    const step3Form = document.getElementById('admin-config-step3-form');
+    if (step3Form) {
+        step3Form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const row1 = stepData.step1Rows[0] || {};
+            const record = {
+                "Code": document.getElementById('s3-code').value || generateUUID(),
+                "Group ID": parseInt(document.getElementById('s3-group-id').value) || row1["Group ID"] || 500,
+                "Institute ID": parseInt(document.getElementById('s3-institute-id').value) || row1["Institute ID"] || 684,
+                "Location ID": parseInt(document.getElementById('s3-location-id').value) || row1["Location ID"] || 16,
+                "Education Type ID": parseInt(document.getElementById('s3-education-id').value) || row1["Education Type ID"] || 486,
+                "Class ID": parseInt(document.getElementById('s3-class-id').value) || 1,
+                "Fee Type ID": parseInt(document.getElementById('s3-feetype-id').value) || 1,
+                "Type": document.getElementById('s3-type').value || 'Payable_fee',
+                "Is Active": parseInt(document.getElementById('s3-isactive').value) || 1,
+                "Created On": new Date().toISOString()
             };
-            DB.apiKeys.push(apiKeyEntry);
+            stepData.step3Rows = [record];
+            await supabaseFetch('Financing details', 'POST', record);
 
-            const newInstObj = {
-                id: activeConfigReq.instituteId,
-                name: activeConfigReq.name,
-                gile: activeConfigReq.gile,
-                location: activeConfigReq.location,
-                education: activeConfigReq.education,
-                studentsCount: 0,
-                onboardDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }),
-                gmv: 0,
-                transactions: 0,
-                status: 'active',
-                penetrationRate: 0.0,
-                gateways: ['Razorpay'],
-                rates: { emi: 50, pg: 50, mandate: 0 },
-                contact: { name: 'Admin', email: 'admin@' + activeConfigReq.name.toLowerCase().replace(/[^a-z0-9]+/g, '') + '.edu', phone: '—' },
-                recentTransactions: [],
-                topStudents: []
+            showToast('Step 3 Saved to Supabase ("Financing details")!');
+            switchAdminWizardStep(3, 4);
+            populateStep4View();
+        });
+    }
+
+    // --- STEP 4 FORM ---
+    const step4Form = document.getElementById('admin-config-step4-form');
+    if (step4Form) {
+        step4Form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const row1 = stepData.step1Rows[0] || {};
+            const clientRecord = {
+                "Code": document.getElementById('s4-code').value || generateUUID(),
+                "Group ID": parseInt(document.getElementById('s4-group-id').value) || row1["Group ID"] || 500,
+                "Institute ID": parseInt(document.getElementById('s4-institute-id').value) || row1["Institute ID"] || 684,
+                "Location ID": parseInt(document.getElementById('s4-location-id').value) || row1["Location ID"] || 16,
+                "Education Type ID": parseInt(document.getElementById('s4-education-id').value) || row1["Education Type ID"] || 486,
+                "Ay ID": parseInt(document.getElementById('s4-ay-id').value) || 455,
+                "Gilec ID": parseInt(document.getElementById('s4-gilec-id').value) || 8138,
+                "Client ID": document.getElementById('cfg-client-id').value,
+                "Client Secret": document.getElementById('cfg-client-secret').value,
+                "Api Key": document.getElementById('cfg-api-key').value,
+                "Is Active": 1,
+                "Created On": new Date().toISOString()
             };
-            DB.institutes.push(newInstObj);
+            stepData.step4Data = await supabaseFetch('Merchant Details Sheet', 'POST', clientRecord);
+            showToast('Step 4 Saved to Supabase ("Merchant Details Sheet")!');
+            switchAdminWizardStep(4, 5);
+            populateStep5View();
+        });
+    }
+
+    // --- STEP 5 FORM ---
+    const step5Form = document.getElementById('admin-config-step5-form');
+    if (step5Form) {
+        step5Form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const whRecord = {
+                "Code": document.getElementById('s5-code').value || generateUUID(),
+                "Md ID": parseInt(document.getElementById('s5-md-id').value) || 1,
+                "Entity": document.getElementById('cfg-wh-entity').value,
+                "URL": document.getElementById('cfg-wh-url').value,
+                "Version": parseInt(document.getElementById('cfg-wh-version').value) || 2,
+                "Secret": document.getElementById('cfg-wh-secret').value || generateUUID().substring(0, 16),
+                "Is Active": parseInt(document.getElementById('s5-isactive').value) || 1,
+                "Created On": new Date().toISOString()
+            };
+            const res = await supabaseFetch("Webhook's event", 'POST', whRecord);
+            stepData.step5Data = res && res[0] ? res[0] : { "ID": 1 };
+            showToast('Step 5 Saved to Supabase ("Webhook\'s event")!');
+            switchAdminWizardStep(5, 6);
+            populateStep6View();
+        });
+    }
+
+    // --- STEP 6 FORM ---
+    const step6Form = document.getElementById('admin-config-step6-form');
+    if (step6Form) {
+        step6Form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mdWdId = parseInt(document.getElementById('s6-md-wd-id').value) || 1;
+            const checkedEvents = document.querySelectorAll('.cfg-event-check:checked');
+
+            for (let chk of checkedEvents) {
+                const evtRecord = {
+                    "Code": generateUUID(),
+                    "Md Wd ID": mdWdId,
+                    "Event": chk.value,
+                    "Is Active": 1,
+                    "Created On": new Date().toISOString()
+                };
+                await supabaseFetch('Events Sheet', 'POST', evtRecord);
+            }
+
+            if (activeConfigReq) {
+                activeConfigReq.status = 'Completed';
+                activeConfigReq.updatedOn = new Date().toLocaleString();
+                DB.apiKeys.push({
+                    gile: activeConfigReq.gile,
+                    inst: activeConfigReq.name,
+                    location: activeConfigReq.location,
+                    clientId: document.getElementById('cfg-client-id').value,
+                    webhookStatus: 'Active',
+                    endpoints: checkedEvents.length
+                });
+            }
 
             populateApiTable();
-            populateInstituteTable();
-            populateSupportGileSelect();
             populateOnboardingRequestLog();
             populateAdminPendingRequests();
+            populateFeeMappingRegistry();
+            if (activeConfigReq) {
+                populateAuditLog('Complete', activeConfigReq.gile || '8138', '6-Step Onboarding Setup Completed');
+            }
 
-            showToast(`🎉 Onboarding setup for "${activeConfigReq.name}" completed successfully! Webhook configured.`);
-            
-            activeConfigReq = null;
+            showToast(`🎉 6-Step Onboarding Setup Complete! All records committed to live Supabase tables!`);
             resetAdminConfigurator();
         });
     }
+
+    // Back buttons
+    document.getElementById('btn-back-to-step1')?.addEventListener('click', () => switchAdminWizardStep(2, 1));
+    document.getElementById('btn-back-to-step2')?.addEventListener('click', () => switchAdminWizardStep(3, 2));
+    document.getElementById('btn-back-to-step3')?.addEventListener('click', () => switchAdminWizardStep(4, 3));
+    document.getElementById('btn-back-to-step4')?.addEventListener('click', () => switchAdminWizardStep(5, 4));
+    document.getElementById('btn-back-to-step5')?.addEventListener('click', () => switchAdminWizardStep(6, 5));
+}
+
+function switchAdminWizardStep(fromStep, toStep) {
+    document.getElementById(`step-indicator-${fromStep}`).classList.remove('active');
+    if (toStep > fromStep) {
+        document.getElementById(`step-indicator-${fromStep}`).classList.add('completed');
+    } else {
+        document.getElementById(`step-indicator-${toStep}`).classList.remove('completed');
+    }
+    document.getElementById(`step-indicator-${toStep}`).classList.add('active');
+
+    document.getElementById(`admin-step${fromStep}-panel`).style.display = 'none';
+    document.getElementById(`admin-step${toStep}-panel`).style.display = '';
+}
+
+function generateRowUUID(label) {
+    const cleanLabel = (label || 'fee').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    return `${cleanLabel}_${generateUUID().substring(0, 8)}`;
+}
+
+function populateStep2View() {
+    const list = document.getElementById('step2-rows-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    // Joined expressions format: #{"label":"...","value":"..."}#+#{"label":"...","value":"..."}#
+    const multiExpr = stepData.step1Rows.map(r => `#{"label":"${r.Name}","value":"${r.Code || generateUUID()}"}#`).join('+');
+    document.getElementById('s2-expression').value = multiExpr;
+
+    let autoIdCounter = 201;
+    stepData.step1Rows.forEach((row, idx) => {
+        ['Semester 1', 'Semester 2'].forEach(sem => {
+            const autoId = autoIdCounter++;
+            const autoCode = generateRowUUID(row.Name);
+            const div = document.createElement('div');
+            div.style.cssText = 'background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid var(--color-border);';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-weight:700; color:var(--color-text-dark);">${row.Name} — ${sem}</span>
+                    <span class="badge-status success" style="font-size:10px;">Sequential ID: ${autoId}</span>
+                </div>
+                <div style="font-size:11px; font-family:monospace; color:var(--color-text-muted);">Per-Row Code: ${autoCode}</div>
+                <div style="font-size:11px; font-family:monospace; color:var(--color-primary); margin-top:4px; font-weight:600;">Expression: #{"label":"${row.Name}","value":"${row.Code}"}#</div>
+            `;
+            list.appendChild(div);
+            populateAuditLog('Configure', row['Gilec ID'] || '8138', `Created Step 2 Fee Group row for ${sem}`);
+        });
+    });
+}
+
+function populateFeeMappingRegistry() {
+    const tbody = document.getElementById('fee-mapping-registry-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    stepData.step1Rows.forEach(row => {
+        tbody.innerHTML += `
+            <tr>
+                <td style="padding-left:16px;"><strong>${row['Gilec ID'] || '8138'}</strong></td>
+                <td>${row.Name}</td>
+                <td>${row.Label}</td>
+                <td><span style="font-family:monospace;">${row.Code}</span></td>
+                <td>${row['Group ID'] || 500}</td>
+                <td>${row['Institute ID'] || 684}</td>
+                <td style="text-align:right; padding-right:16px; font-weight:700; color:var(--color-success);">₹${Number(row['Default Amount'] || 50000).toLocaleString('en-IN')}</td>
+            </tr>
+        `;
+    });
+}
+
+function populateAuditLog(action, gile, notes) {
+    const tbody = document.getElementById('admin-audit-log-tbody');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    const time = new Date().toLocaleString();
+    tr.innerHTML = `
+        <td style="padding-left:16px;">${time}</td>
+        <td><span class="badge-status success" style="font-size:10px;">${action}</span></td>
+        <td><strong>GILE-${gile}</strong></td>
+        <td>${notes}</td>
+    `;
+    tbody.prepend(tr);
+}
+
+function addAuditLogRow(table, id, code, entity, event) {
+    const tbody = document.getElementById('excel-audit-tbody');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    const time = new Date().toLocaleTimeString();
+    tr.innerHTML = `
+        <td>${time}</td>
+        <td><code>${table}</code></td>
+        <td>${id}</td>
+        <td><span style="font-family:monospace;">${code.substring(0, 18)}...</span></td>
+        <td>${entity}</td>
+        <td><span class="badge-status success" style="font-size:10px;">${event}</span></td>
+    `;
+    tbody.prepend(tr);
+}
+
+function exportExcelAuditLog() {
+    showToast('📊 Exporting Excel Spreadsheet (.CSV) for Onboarding Audit Sheet...');
+}
+
+window.generateRowUUID = generateRowUUID;
+window.populateFeeMappingRegistry = populateFeeMappingRegistry;
+window.populateAuditLog = populateAuditLog;
+window.addAuditLogRow = addAuditLogRow;
+window.exportExcelAuditLog = exportExcelAuditLog;
+
+function populateStep4View() {
+    document.getElementById('cfg-client-id').value = 'GQ-' + generateUUID();
+    document.getElementById('cfg-client-secret').value = generateUUID();
+    document.getElementById('cfg-api-key').value = generateUUID();
 }
 
 function resetAdminConfigurator() {
-    document.getElementById('step-indicator-2').classList.remove('active');
-    document.getElementById('step-indicator-1').classList.remove('completed');
-    document.getElementById('step-indicator-1').classList.add('active');
-
-    document.getElementById('admin-step2-panel').style.display = 'none';
-    document.getElementById('admin-step1-panel').style.display = '';
-
-    document.getElementById('admin-config-step1-form').reset();
-    document.getElementById('cfg-serial-id').value = '';
-    document.getElementById('cfg-code').value = '';
-    document.getElementById('config-sub-rows-list').innerHTML = '';
-    
-    document.getElementById('meta-created-on').textContent = '—';
-    document.getElementById('meta-updated-on').textContent = '—';
-
-    document.getElementById('admin-fields-form-block').classList.add('locked');
-    document.getElementById('admin-lock-overlay-msg').innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        Please select a GILE and enter Product ID
-    `;
-
+    for (let i = 1; i <= 6; i++) {
+        document.getElementById(`step-indicator-${i}`)?.classList.remove('active', 'completed');
+        document.getElementById(`admin-step${i}-panel`).style.display = i === 1 ? '' : 'none';
+    }
+    document.getElementById('step-indicator-1')?.classList.add('active');
+    document.getElementById('admin-fields-form-block')?.classList.add('locked');
     document.getElementById('admin-unlock-section').style.display = 'none';
+    activeConfigReq = null;
 }
 
 function populateAdminPendingRequests() {
@@ -1783,103 +1977,92 @@ function selectAdminRequest(reqId) {
     const unlockSec = document.getElementById('admin-unlock-section');
     unlockSec.style.display = '';
     document.getElementById('unlock-card-title').textContent = `Unlock Setup — ${activeConfigReq.name}`;
-
-    document.getElementById('admin-product-id').value = activeConfigReq.productId || '';
-    document.getElementById('cfg-serial-id').value = 'GQ-CONF-' + reqId.split('-')[1];
+    document.getElementById('admin-product-id').value = activeConfigReq.productId || '500';
 
     if (activeConfigReq.productId) {
         unlockFields(activeConfigReq.productId);
-    } else {
-        document.getElementById('admin-fields-form-block').classList.add('locked');
-        document.getElementById('admin-lock-overlay-msg').innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            Please enter Product ID to unlock fields for ${activeConfigReq.name}
-        `;
     }
 }
 
 function unlockFields(productId) {
     if (!activeConfigReq) return;
-
     const block = document.getElementById('admin-fields-form-block');
     block.classList.remove('locked');
 
-    document.getElementById('cfg-group-id').value = activeConfigReq.groupId || activeConfigReq.group.toUpperCase().replace(/\s+/g, '-');
-    document.getElementById('cfg-institute-id').value = activeConfigReq.instituteId || activeConfigReq.name.toUpperCase().replace(/\s+/g, '-');
-    document.getElementById('cfg-location-id').value = activeConfigReq.locationId || activeConfigReq.location.toUpperCase().replace(/\s+/g, '-');
-    document.getElementById('cfg-education-id').value = activeConfigReq.educationId || activeConfigReq.education.toUpperCase().replace(/\s+/g, '-');
-    document.getElementById('cfg-class-id').value = activeConfigReq.classId || 'ALL-CLASSES';
-
-    if (!activeConfigReq.code) {
-        activeConfigReq.code = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-    document.getElementById('cfg-code').value = activeConfigReq.code;
-
-    document.getElementById('meta-created-on').textContent = activeConfigReq.createdOn;
-    document.getElementById('meta-updated-on').textContent = activeConfigReq.updatedOn;
+    document.getElementById('cfg-group-id').value = 500;
+    document.getElementById('cfg-institute-id').value = 684;
+    document.getElementById('cfg-location-id').value = 16;
+    document.getElementById('cfg-education-id').value = 486;
+    document.getElementById('cfg-ay-id').value = '455';
+    document.getElementById('cfg-gilec-id').value = '8138';
 
     const list = document.getElementById('config-sub-rows-list');
     list.innerHTML = '';
-    if (activeConfigReq.feeRows && activeConfigReq.feeRows.length > 0) {
-        activeConfigReq.feeRows.forEach(row => {
-            addConfigFeeRow(row.feeType, row.type, row.active);
-        });
-    } else {
-        addConfigFeeRow('Academic Tuition Fee', 'Monthly', true);
-    }
+    addConfigFeeRow('Payable_fee_Auto_Debit', 'Payable_fee_Auto_Debit');
+    addConfigFeeRow('Payable_fee_PG', 'Payable_fee_PG');
+    addConfigFeeRow('Payable_fee_EMI', 'Payable_fee_EMI');
+    addConfigFeeRow('School Fee', 'School Fee');
+
+    stepData.step1Rows = [
+        { Name: 'Payable_fee_Auto_Debit', Label: 'Payable_fee_Auto_Debit', Code: generateUUID(), "Group ID": 500, "Institute ID": 684, "Gilec ID": 8138, "Default Amount": 45000 },
+        { Name: 'Payable_fee_PG', Label: 'Payable_fee_PG', Code: generateUUID(), "Group ID": 500, "Institute ID": 684, "Gilec ID": 8138, "Default Amount": 35000 },
+        { Name: 'Payable_fee_EMI', Label: 'Payable_fee_EMI', Code: generateUUID(), "Group ID": 500, "Institute ID": 684, "Gilec ID": 8138, "Default Amount": 55000 },
+        { Name: 'School Fee', Label: 'School Fee', Code: generateUUID(), "Group ID": 500, "Institute ID": 684, "Gilec ID": 8138, "Default Amount": 60000 }
+    ];
+    populateFeeMappingRegistry();
+    populateAuditLog('Unlock', activeConfigReq.gile || '8138', 'Unlocked configuration setup');
 }
 
-function addConfigFeeRow(feeType = '', type = 'Monthly', active = true) {
+function addConfigFeeRow(name = 'Payable_fee_PG', label = 'Payable_fee_PG') {
     const list = document.getElementById('config-sub-rows-list');
     if (!list) return;
 
     const div = document.createElement('div');
     div.className = 'config-sub-row';
+    div.style.cssText = 'background: white; padding: 12px; border-radius: 8px; border: 1px solid var(--color-border); position: relative;';
     div.innerHTML = `
-        <input type="text" class="cfg-fee-type" placeholder="Fee Type ID" value="${feeType}" required style="font-size:12px;">
-        <select class="cfg-fee-type-sel form-select-style" style="font-size:12px; width:100%;">
-            <option value="Monthly" ${type === 'Monthly' ? 'selected' : ''}>Monthly</option>
-            <option value="Quarterly" ${type === 'Quarterly' ? 'selected' : ''}>Quarterly</option>
-            <option value="Annually" ${type === 'Annually' ? 'selected' : ''}>Annually</option>
-            <option value="Custom" ${type === 'Custom' ? 'selected' : ''}>Custom</option>
-        </select>
-        <div class="active-toggle-container">
-            <input type="checkbox" class="cfg-fee-active" ${active ? 'checked' : ''} style="width:16px;height:16px;">
-            <label style="font-size:11px;font-weight:600;margin:0;">Active</label>
+        <button type="button" class="btn-remove-row" onclick="this.closest('.config-sub-row').remove()" style="position: absolute; top: 8px; right: 8px; border:none; background:rgba(239,68,68,0.1); color:#ef4444; padding:2px 8px; border-radius:4px; cursor:pointer; font-weight:700;">×</button>
+        <div class="form-row">
+            <div class="form-group"><label>Name *</label><input type="text" class="cfg-fee-name" value="${name}" required></div>
+            <div class="form-group"><label>Label *</label><input type="text" class="cfg-fee-label" value="${label}" required></div>
+            <div class="form-group"><label>Description</label><input type="text" class="cfg-fee-desc" value="${label} for institute"></div>
         </div>
-        <button type="button" class="btn-remove-row" onclick="this.closest('.config-sub-row').remove()">×</button>
+        <div class="form-row" style="margin-top: 8px;">
+            <div class="form-group"><label>Due Date</label><input type="date" class="cfg-fee-duedate" value="2026-07-01"></div>
+            <div class="form-group"><label>Default Amount</label><input type="text" class="cfg-fee-amount" value="50000"></div>
+            <div class="form-group"><label>Tax Rate (%)</label><input type="number" step="0.1" class="cfg-fee-taxrate" value="18.0"></div>
+        </div>
     `;
     list.appendChild(div);
 }
 
-function populateStep2Metrics() {
-    const tbody = document.getElementById('admin-step2-metrics-table');
-    if (!tbody || !activeConfigReq) return;
+function switchAdminModule(mod) {
+    document.querySelectorAll('.admin-subnav-bar button').forEach(btn => {
+        btn.className = 'btn btn-secondary btn-sm';
+    });
+    const activeBtn = document.getElementById(`admin-mod-btn-${mod}`);
+    if (activeBtn) activeBtn.className = 'btn btn-primary btn-sm';
 
-    const feeSummary = activeConfigReq.feeRows.map(r => 
-        `${r.feeType} (${r.type}, ${r.active ? 'Active' : 'Inactive'})`
-    ).join('<br>');
-
-    tbody.innerHTML = `
-        <tr><td><strong>Product ID</strong></td><td><span style="font-family:monospace;font-weight:700;">${activeConfigReq.productId}</span></td></tr>
-        <tr><td><strong>Serial ID</strong></td><td><span style="font-family:monospace;font-weight:600;">GQ-CONF-${activeConfigReq.id.split('-')[1]}</span></td></tr>
-        <tr><td><strong>UUID Config Code</strong></td><td><span style="font-family:monospace;font-size:11px;color:var(--color-primary);">${activeConfigReq.code}</span></td></tr>
-        <tr><td><strong>Group ID</strong></td><td><code>${activeConfigReq.groupId}</code></td></tr>
-        <tr><td><strong>Institute ID</strong></td><td><code>${activeConfigReq.instituteId}</code></td></tr>
-        <tr><td><strong>Location ID</strong></td><td><code>${activeConfigReq.locationId}</code></td></tr>
-        <tr><td><strong>Education Type ID</strong></td><td><code>${activeConfigReq.educationId}</code></td></tr>
-        <tr><td><strong>Class ID</strong></td><td><code>${activeConfigReq.classId}</code></td></tr>
-        <tr><td><strong>Fee Mappings</strong></td><td>${feeSummary || 'No mappings defined'}</td></tr>
-        <tr><td><strong>Created Timestamp</strong></td><td>${activeConfigReq.createdOn}</td></tr>
-        <tr><td><strong>Last Updated Timestamp</strong></td><td>${activeConfigReq.updatedOn}</td></tr>
-    `;
+    if (mod === 'configurator') {
+        document.getElementById('admin-flow-steps').style.display = '';
+        document.querySelector('#admin-tab .grid-3-col').style.display = '';
+    } else if (mod === 'institutes') {
+        switchTab('institutes');
+        showToast('🏫 Switched to Active Institutes Directory');
+    } else if (mod === 'webhooks') {
+        switchTab('inst-api');
+        showToast('🔑 Switched to API & Webhook Management');
+    } else if (mod === 'support') {
+        switchTab('support');
+        showToast('🎧 Switched to Support Desk');
+    }
 }
 
-// Expose globally
+window.switchAdminModule = switchAdminModule;
 window.selectAdminRequest = selectAdminRequest;
 window.toggleGroupRow = toggleGroupRow;
 window.redirectToFms = redirectToFms;
+window.switchTab = switchTab;
+window.populateInstituteTable = populateInstituteTable;
+
 

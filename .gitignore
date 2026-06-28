@@ -1,6 +1,7 @@
 node_modules/
-*.log
-test_*.png
-verify_all_screens.js
-qa_comprehensive.js
-qa_test.js
+*.wav
+*.mov
+chunks/
+frames_2/
+transcripts_all/
+qa_report_output.json

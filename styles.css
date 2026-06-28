@@ -120,9 +120,61 @@ body {
     gap: 4px;
 }
 
-/* Hide scrollbar for sidebar menu */
-.sidebar-menu::-webkit-scrollbar {
-    width: 0px;
+.menu-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 16px 6px 16px;
+}
+
+/* Nexus Header Search & Portal Switcher */
+.header-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    width: 280px;
+}
+.header-search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    width: 100%;
+}
+.search-shortcut {
+    background: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.portal-switcher-container {
+    margin-right: 12px;
+}
+.portal-switcher-select {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.25);
+    transition: all 0.2s ease;
+}
+.portal-switcher-select:hover {
+    background: #4338ca;
 }
 
 .menu-item {
@@ -2436,11 +2488,11 @@ input:checked + .toggle-slider:before {
 
 .admin-steps {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
     position: relative;
-    max-width: 600px;
+    max-width: 950px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -2450,7 +2502,8 @@ input:checked + .toggle-slider:before {
     position: absolute;
     height: 2px;
     background: var(--color-border);
-    width: 60%;
+    width: 85%;
+    left: 7.5%;
     z-index: 1;
 }
 
@@ -2458,11 +2511,11 @@ input:checked + .toggle-slider:before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     position: relative;
     z-index: 2;
     background: #f8fafc;
-    padding: 0 16px;
+    padding: 0 6px;
 }
 
 .admin-step-num {
